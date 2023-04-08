@@ -1,3 +1,4 @@
+import config
 import sqlite3
 import discord
 from discord import ButtonStyle
@@ -9,7 +10,7 @@ class SuggestionButtonsView(View):
     def __init__(self):
         super().__init__(timeout=None)
 
-    @button(emoji='⏫', style=ButtonStyle.blurple, custom_id="suggestion_upvote")
+    @button(emoji=config.SUCCESS_EMOJI, style=ButtonStyle.gray, custom_id="suggestion_upvote")
     async def suggestionUpvote(self, interaction: discord.Interaction, button: Button):
         data = database.execute("SELECT suggestion_id FROM Suggestions WHERE message_id = ?", (interaction.message.id,)).fetchone()
         upvotes_data = database.execute(f"SELECT upvotes FROM '{data[0]}' WHERE upvotes = ?", (interaction.user.id,)).fetchone()
@@ -30,8 +31,8 @@ class SuggestionButtonsView(View):
                     downvotes += 1
 
             embed = interaction.message.embeds[0]
-            embed.set_field_at(index=2, name=embed.fields[2].name, value=f"⏫ **{upvotes}**\n⏬ **{downvotes}**")
-            await interaction.response.send_message(content="Upvote registered", ephemeral=True)
+            embed.set_field_at(index=2, name=embed.fields[2].name, value=f"{config.SUCCESS_EMOJI}: **{upvotes}**\n{config.ERROR_EMOJI}: **{downvotes}**")
+            await interaction.response.send_message(content="Thanks!\nI have registered your up vote.", ephemeral=True)
             await interaction.followup.edit_message(message_id=interaction.message.id, embed=embed)
             return
 
@@ -51,16 +52,16 @@ class SuggestionButtonsView(View):
                     downvotes += 1
 
             embed = interaction.message.embeds[0]
-            embed.set_field_at(index=2, name=embed.fields[2].name, value=f"⏫ **{upvotes}**\n⏬ **{downvotes}**")
-            await interaction.response.send_message(content="Vote switched to Upvote", ephemeral=True)
+            embed.set_field_at(index=2, name=embed.fields[2].name, value=f"{config.SUCCESS_EMOJI}: **{upvotes}**\n{config.ERROR_EMOJI}: **{downvotes}**")
+            await interaction.response.send_message(content="I have changed your vote from an up vote to a down vote for this suggestion.", ephemeral=True)
             await interaction.followup.edit_message(message_id=interaction.message.id, embed=embed)
             return
 
         else:
-            await interaction.response.send_message(content="Upvote already registered!", ephemeral=True)
+            await interaction.response.send_message(content="You have already up voted this suggestion.", ephemeral=True)
             return
 
-    @button(emoji='⏬', style=ButtonStyle.blurple, custom_id="suggestion_downvote")
+    @button(emoji=config.ERROR_EMOJI, style=ButtonStyle.gray, custom_id="suggestion_downvote")
     async def suggestionDownvote(self, interaction: discord.Interaction, button: Button):
         data = database.execute("SELECT suggestion_id FROM Suggestions WHERE message_id = ?", (interaction.message.id,)).fetchone()
         upvotes_data = database.execute(f"SELECT upvotes FROM '{data[0]}' WHERE upvotes = ?", (interaction.user.id,)).fetchone()
@@ -80,7 +81,7 @@ class SuggestionButtonsView(View):
                     downvotes += 1
 
             embed = interaction.message.embeds[0]
-            embed.set_field_at(index=2, name=embed.fields[2].name, value=f"⏫ **{upvotes}**\n⏬ **{downvotes}**")
+            embed.set_field_at(index=2, name=embed.fields[2].name, value=f"{config.SUCCESS_EMOJI}: **{upvotes}**\n{config.ERROR_EMOJI}: **{downvotes}**")
             await interaction.response.send_message(content="Downvote registered", ephemeral=True)
             await interaction.followup.edit_message(message_id=interaction.message.id, embed=embed)
             return
@@ -101,7 +102,7 @@ class SuggestionButtonsView(View):
                     downvotes += 1
 
             embed = interaction.message.embeds[0]
-            embed.set_field_at(index=2, name=embed.fields[2].name, value=f"⏫ **{upvotes}**\n⏬ **{downvotes}**")
+            embed.set_field_at(index=2, name=embed.fields[2].name, value=f"{config.SUCCESS_EMOJI}: **{upvotes}**\n{config.ERROR_EMOJI}: **{downvotes}**")
             await interaction.response.send_message(content="Vote switched to Downvote", ephemeral=True)
             await interaction.followup.edit_message(message_id=interaction.message.id, embed=embed)
             return

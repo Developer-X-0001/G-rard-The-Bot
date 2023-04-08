@@ -181,6 +181,13 @@ class Bot(commands.Bot):
 
         await bot.tree.sync()
 
+        for filename in os.listdir('Events'):
+            if filename.endswith('.py'):
+                await self.load_extension(f'Events.{filename[:-3]}')
+                print(f'Loaded {filename}')
+            if filename.startswith('__'):
+                pass
+
 bot = Bot()
 
 @bot.listen()
@@ -195,9 +202,9 @@ async def clear(ctx: commands.Context, amount: int = None):
     await ctx.channel.purge(limit=amount + 1)
 
 @bot.command(name="reload")
-async def reload(ctx: commands.Context, cog:str):
+async def reload(ctx: commands.Context, folder: str, cog:str):
     # Reloads the file, thus updating the Cog class.
-    await bot.reload_extension(f"Modules.{cog}")
+    await bot.reload_extension(f"{folder}.{cog}")
     await ctx.message.delete()
     await ctx.send(f"🔁 {cog} reloaded!", delete_after=5)
 
