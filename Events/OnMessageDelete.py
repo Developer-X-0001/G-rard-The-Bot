@@ -27,6 +27,7 @@ class OnMessageDelete(commands.Cog):
         if data is None:
             return
         
+        database.execute("DELETE FROM Suggestions WHERE suggestion_id = ?", (data[0],)).connection.commit()
         database.execute(f"DROP TABLE '{data[0]}'").connection.commit()
 
 async def setup(bot: commands.Bot):

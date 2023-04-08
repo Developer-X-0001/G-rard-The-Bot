@@ -51,7 +51,7 @@ class Suggestions(commands.Cog):
 
         await interaction.response.send_message(embed=embed, view=SuggestionSystemConfigurationView(), ephemeral=True)
     
-    @suggestions.command(name="queue", description="View suggestions queue")
+    @suggestions.command(name="queue", description="View suggestions queue.")
     async def queue(self, interaction: discord.Interaction):
         data = database.execute("SELECT suggestions_queue FROM Config WHERE guild_id = ?", (interaction.guild.id,)).fetchone()
         if data is None or data[0] == 'Disabled':
@@ -220,7 +220,38 @@ class Suggestions(commands.Cog):
 
     @suggestions.command(name="clear", description="Remove a suggestion and any associated messages.")
     async def _clear(self, interaction: discord.Interaction, suggestion_id: str, response: str = None):
-        await interaction.response.send_message("Not functional yet")
+        data = database.execute("SELECT message_id, user_id, suggestion FROM Suggestions WHERE suggestion_id = ?", (suggestion_id,)).fetchone()
+        if data is None:
+            error_embed = discord.Embed(
+                title="Command Failed",
+                description=f"No suggestion found with the id **{suggestion_id}** in this guild",
+                color=config.RED_COLOR,
+                timestamp=datetime.datetime.now()
+            )
+            await interaction.response.send_message(embed=error_embed, ephemeral=True)
+        
+        else:
+            await interaction.response.defer(ephemeral=True)
+            suggestion_message = None
+            for channel in interaction.guild.text_channels:
+                if suggestion_message != None:
+                    break
+                try:
+                    suggestion_message = await channel.fetch_message(data[0])
+                except:
+                    pass
+            else:
+                error_embed = discord.Embed(
+                    title="Command Failed",
+                    description="Unable to locate suggestion message",
+                    color=config.RED_COLOR,
+                    timestamp=datetime.datetime.now()
+                )
+                await interaction.followup.send(embed=error_embed)
+                return
+
+            await suggestion_message.delete()
+            await interaction.followup.send(content=f"I have cleared `{suggestion_id}` for you.")
 
     @_clear.autocomplete('suggestion_id')
     async def _clear_autocomplete(self, interaction: discord.Interaction, current: str):
