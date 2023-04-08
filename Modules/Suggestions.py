@@ -214,7 +214,17 @@ class Suggestions(commands.Cog):
 
     @_reject.autocomplete('suggestion_id')
     async def _reject_autocomplete(self, interaction: discord.Interaction, current: str):
-        data = database.execute("SELECT suggestoin_Id FROM Suggestions").fetchall()
+        data = database.execute("SELECT suggestion_Id FROM Suggestions").fetchall()
+
+        return [app_commands.Choice(name=entry[0], value=entry[0]) for entry in data if current in entry[0]]
+
+    @suggestions.command(name="clear", description="Remove a suggestion and any associated messages.")
+    async def _clear(self, interaction: discord.Interaction, suggestion_id: str, response: str = None):
+        await interaction.response.send_message("Not functional yet")
+
+    @_clear.autocomplete('suggestion_id')
+    async def _clear_autocomplete(self, interaction: discord.Interaction, current: str):
+        data = database.execute("SELECT suggestion_id FROM Suggestions").fetchall()
 
         return [app_commands.Choice(name=entry[0], value=entry[0]) for entry in data if current in entry[0]]
 
