@@ -37,12 +37,12 @@ class SuggestionSystemChannelConfigurationView(View):
 class SuggestionSystemConfigurationView(View):
     def __init__(self):
         super().__init__(timeout=None)
-        # self.add_item(AnonymousSelector())
+        self.add_item(AnonymousSelector())
         self.add_item(DMStatusSelector())
         self.add_item(SuggestionQueueingSelector())
         self.add_item(SuggestionThreadsSelector())
 
-    @button(label="Done", style=ButtonStyle.green)
+    @button(label="Done", style=ButtonStyle.green, row=4)
     async def done(self, interaction: discord.Interaction, button: Button):
         await interaction.response.edit_message(view=None)
 
@@ -77,7 +77,7 @@ class DMStatusSelector(Select):
     async def callback(self, interaction: discord.Interaction):
         database.execute("INSERT INTO Config VALUES (?, NULL, NULL, NULL, NULL, ?, NULL, NULL) ON CONFLICT (guild_id) DO UPDATE SET dm_status = ? WHERE guild_id = ?", (interaction.guild.id, 'Enabled' if self.values[0] == '1' else 'Disabled', 'Enabled' if self.values[0] == '1' else 'Disabled', interaction.guild.id,)).connection.commit()
         embed = interaction.message.embeds[0]
-        embed.set_field_at(index=3, name=embed.fields[3].name, value="✅ Enabled" if self.values[0] == '1' else "❌ Disabled", inline=True)
+        embed.set_field_at(index=4, name=embed.fields[4].name, value="✅ Enabled" if self.values[0] == '1' else "❌ Disabled", inline=True)
         await interaction.response.edit_message(embed=embed, view=SuggestionSystemConfigurationView())
 
 class SuggestionQueueingSelector(Select):
@@ -92,7 +92,7 @@ class SuggestionQueueingSelector(Select):
     async def callback(self, interaction: discord.Interaction):
         database.execute("INSERT INTO Config VALUES (?, NULL, NULL, NULL, NULL, NULL, ?, NULL) ON CONFLICT (guild_id) DO UPDATE SET suggestions_queue = ? WHERE guild_id = ?", (interaction.guild.id, 'Enabled' if self.values[0] == '1' else 'Disabled', 'Enabled' if self.values[0] == '1' else 'Disabled', interaction.guild.id,)).connection.commit()
         embed = interaction.message.embeds[0]
-        embed.set_field_at(index=4, name=embed.fields[4].name, value="✅ Enabled" if self.values[0] == '1' else "❌ Disabled", inline=True)
+        embed.set_field_at(index=5, name=embed.fields[5].name, value="✅ Enabled" if self.values[0] == '1' else "❌ Disabled", inline=True)
         await interaction.response.edit_message(embed=embed, view=SuggestionSystemConfigurationView())
 
 class SuggestionThreadsSelector(Select):
@@ -107,5 +107,5 @@ class SuggestionThreadsSelector(Select):
     async def callback(self, interaction: discord.Interaction):
         database.execute("INSERT INTO Config VALUES (?, NULL, NULL, NULL, NULL, NULL, NULL, ?) ON CONFLICT (guild_id) DO UPDATE SET thread_status = ? WHERE guild_id = ?", (interaction.guild.id, 'Enabled' if self.values[0] == '1' else 'Disabled', 'Enabled' if self.values[0] == '1' else 'Disabled', interaction.guild.id,)).connection.commit()
         embed = interaction.message.embeds[0]
-        embed.set_field_at(index=5, name=embed.fields[5].name, value="✅ Enabled" if self.values[0] == '1' else "❌ Disabled", inline=True)
+        embed.set_field_at(index=6, name=embed.fields[6].name, value="✅ Enabled" if self.values[0] == '1' else "❌ Disabled", inline=True)
         await interaction.response.edit_message(embed=embed, view=SuggestionSystemConfigurationView())

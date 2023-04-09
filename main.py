@@ -135,6 +135,7 @@ class Bot(commands.Bot):
                     suggestion_id TEXT,
                     user_id INTEGER,
                     suggestion TEXT,
+                    anonymous TEXT,
                     Primary Key (suggestion_id)
                 )
             '''
@@ -145,6 +146,7 @@ class Bot(commands.Bot):
                     suggestion_id TEXT,
                     user_id INTEGER,
                     suggestion TEXT,
+                    anonymous TEXT,
                     approver_id INTEGER,
                     Primary Key (message_id)
                 )

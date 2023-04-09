@@ -67,7 +67,7 @@ class SuggestionButtonsView(View):
         upvotes_data = database.execute(f"SELECT upvotes FROM '{data[0]}' WHERE upvotes = ?", (interaction.user.id,)).fetchone()
         downvotes_data = database.execute(f"SELECT downvotes FROM '{data[0]}' WHERE downvotes = ?", (interaction.user.id,)).fetchone()
         if upvotes_data is None and downvotes_data is None:
-            database.execute(f"INSERT INTO '{data[0]}' VALUES (?, NULL)", (interaction.user.id,)).connection.commit()
+            database.execute(f"INSERT INTO '{data[0]}' VALUES (NULL, ?)", (interaction.user.id,)).connection.commit()
             total_upvotes = database.execute(f"SELECT upvotes FROM '{data[0]}'").fetchall()
             total_downvotes = database.execute(f"SELECT downvotes FROM '{data[0]}'").fetchall()
             upvotes = 0
