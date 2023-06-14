@@ -153,6 +153,39 @@ class Bot(commands.Bot):
             '''
         )
 
+        sqlite3.connect("./Databases/activity.sqlite").execute(
+            '''
+                CREATE TABLE IF NOT EXISTS ActivityConfig (
+                    guild_id INTEGER,
+                    invitepoints INTEGER,
+                    messagepoints INTEGER,
+                    rolepoints INTEGER,
+                    role_id INTEGER,
+                    channelpoints INTEGER,
+                    channel_id INTEGER,
+                    rolepointsinchannel INTEGER,
+                    role_channel_id INTEGER,
+                    channelpointswithrole INTEGER,
+                    channel_role_id INTEGER,
+                    Primary Key (guild_id)
+                )
+            '''
+        ).execute(
+            '''
+                CREATE TABLE IF NOT EXISTS UserProfiles (
+                    user_id INTEGER,
+                    current_points INTEGER,
+                    total_points INTEGER,
+                    total_messages INTEGER,
+                    message_points INTEGER,
+                    total_invites INTEGER,
+                    invite_points INTEGER,
+                    items_shopped INTEGER,
+                    Primary Key (user_id)
+                )
+            '''
+        )
+
         database = sqlite3.connect("./Databases/reactionroles.sqlite").execute(
             '''
                 CREATE TABLE IF NOT EXISTS ReactionRoles (

@@ -31,7 +31,6 @@ class NewRoleModal(Modal, title="Adding New Region"):
     )
 
     async def on_submit(self, interaction: discord.Interaction):
-        print(str(self.region_name))
         data = database.execute("SELECT role_id FROM RegionRoles WHERE role_id = ?", (str(self.region_role),)).fetchone()
         if data is None:
             database.execute("INSERT INTO RegionRoles VALUES (?, ?, ?)", (str(self.region_name), int(str(self.region_role)), str(self.region_emoji),)).connection.commit()
