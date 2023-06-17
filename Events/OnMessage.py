@@ -21,9 +21,8 @@ class OnMesage(commands.Cog):
                 role_id,
                 channelpoints,
                 channel_id,
-                rolepointsinchannel,
+                roleandchannelpoints,
                 role_channel_id,
-                channelpointswithrole,
                 channel_role_id
                 FROM ActivityConfig
                 WHERE guild_id = ?
@@ -42,10 +41,9 @@ class OnMesage(commands.Cog):
         role = None if config_data is None else guild.get_role(config_data[2])
         channel_points = 0 if config_data is None else config_data[3]
         channel = None if config_data is None else guild.get_channel(config_data[4])
-        roles_points_in_channel = 0 if config_data is None else config_data[5]
-        role_for_points_in_channel = None if config_data is None else guild.get_role(config_data[6])
-        channel_points_with_role = 0 if config_data is None else config_data[7]
-        channel_for_points_with_role = None if config_data is None else guild.get_channel(config_data[8])
+        role_and_channel_points = 0 if config_data is None else config_data[5]
+        role_channel = None if config_data is None else guild.get_role(config_data[6])
+        channel_role = None if config_data is None else guild.get_channel(config_data[7])
 
         total_points = 1
 
@@ -54,9 +52,8 @@ class OnMesage(commands.Cog):
         if role in user.roles:
             total_points += role_points
 
-        if role_for_points_in_channel in user.roles and message.channel == channel_for_points_with_role:
-            total_points += roles_points_in_channel
-            total_points += channel_points_with_role
+        if role_channel in user.roles and message.channel == channel_role:
+            total_points += role_and_channel_points
 
         if message.channel == channel:
             total_points += channel_points        

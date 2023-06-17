@@ -163,9 +163,8 @@ class Bot(commands.Bot):
                     role_id INTEGER,
                     channelpoints INTEGER,
                     channel_id INTEGER,
-                    rolepointsinchannel INTEGER,
+                    roleandchannelpoints INTEGER,
                     role_channel_id INTEGER,
-                    channelpointswithrole INTEGER,
                     channel_role_id INTEGER,
                     Primary Key (guild_id)
                 )
@@ -182,6 +181,29 @@ class Bot(commands.Bot):
                     invite_points INTEGER,
                     items_shopped INTEGER,
                     Primary Key (user_id)
+                )
+            '''
+        )
+
+        sqlite3.connect("./Databases/tickets.sqlite").execute(
+            '''
+                CREATE TABLE IF NOT EXISTS TicketPanels (
+                    panel_id TEXT,
+                    message_id INTEGER,
+                    role_id INTEGER,
+                    channel_id INTEGER,
+                    category_id INTEGER,
+                    Primary Key (panel_id)
+                )
+            '''
+        ).execute(
+            '''
+                CREATE TABLE IF NOT EXISTS UserTickets (
+                    panel_id TEXT,
+                    user_id INTEGER,
+                    channel_id INTEGER,
+                    status TEXT,
+                    timestamp INTEGER
                 )
             '''
         )

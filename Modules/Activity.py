@@ -58,7 +58,7 @@ class Activity(commands.Cog):
             '''
                 INSERT INTO ActivityConfig VALUES (
                     ?,
-                    0,
+                    1,
                     ?,
                     0,
                     NULL,
@@ -66,7 +66,6 @@ class Activity(commands.Cog):
                     NULL,
                     0,
                     NULL,
-                    0,
                     NULL
                 ) ON CONFLICT (guild_id)
                 DO UPDATE SET 
@@ -81,7 +80,7 @@ class Activity(commands.Cog):
             )
         ).connection.commit()
 
-        await interaction.response.send_message(embed=discord.Embed(description="✅ Points given per message set to `{}`!".format(amount), color=discord.Color.green()), ephemeral=True)
+        await interaction.response.send_message(embed=discord.Embed(description="✅ Points given per message has been set to `{}`!".format(amount), color=discord.Color.green()), ephemeral=True)
 
     @activity_group.command(name="set-channel-points", description="Set how many points are given when a message is sent in a specific channel.")
     async def set_channel_points(self, interaction: discord.Interaction, channel: discord.TextChannel, amount: int):
@@ -93,7 +92,7 @@ class Activity(commands.Cog):
             '''
                 INSERT INTO ActivityConfig VALUES (
                     ?,
-                    0,
+                    1,
                     1,
                     0,
                     NULL,
@@ -101,7 +100,6 @@ class Activity(commands.Cog):
                     ?,
                     0,
                     NULL,
-                    0,
                     NULL
                 ) ON CONFLICT (guild_id)
                 DO UPDATE SET 
@@ -119,7 +117,7 @@ class Activity(commands.Cog):
             )
         ).connection.commit()
 
-        await interaction.response.send_message(embed=discord.Embed(description="✅ Points given per message sent in {} set to `{}`!".format(channel.mention, amount), color=discord.Color.green()), ephemeral=True)
+        await interaction.response.send_message(embed=discord.Embed(description="✅ Points given per message sent in {} has been set to `{}`!".format(channel.mention, amount), color=discord.Color.green()), ephemeral=True)
 
     @activity_group.command(name="set-role-points", description="Set how many points are given when someone sends a message having specifc role.")
     async def set_role_points(self, interaction: discord.Interaction, role: discord.Role, amount: int):
@@ -131,7 +129,7 @@ class Activity(commands.Cog):
             '''
                 INSERT INTO ActivityConfig VALUES (
                     ?,
-                    0,
+                    1,
                     1,
                     ?,
                     ?,
@@ -139,7 +137,6 @@ class Activity(commands.Cog):
                     NULL,
                     0,
                     NULL,
-                    0,
                     NULL
                 ) ON CONFLICT (guild_id)
                 DO UPDATE SET 
@@ -157,7 +154,47 @@ class Activity(commands.Cog):
             )
         ).connection.commit()
 
-        await interaction.response.send_message(embed=discord.Embed(description="✅ Points given per message sent when having {} role set to `{}`!".format(role.mention, amount)), ephemeral=True)
+        await interaction.response.send_message(embed=discord.Embed(description="✅ Points given per message sent when having {} role has been set to `{}`!".format(role.mention, amount)), ephemeral=True)
+
+    @activity_group.command(name="set-role-and-channel-points", description="Set how many points to give if user has a role and message in specific channel.")
+    async def set_role_and_channel_points(self, interaction: discord.Interaction, role: discord.Role, channel: discord.TextChannel, amount: int):
+        if amount <= 0:
+            await interaction.response.send_message(embed=discord.Embed(description="❌ **Amount must be greater than zero!**", color=discord.Color.red()), ephemeral=True)
+            return
+        
+        self.database.execute(
+            '''
+                INSERT INTO ActivityConfig VALUES (
+                    ?,
+                    1,
+                    1,
+                    0,
+                    NULL,
+                    0,
+                    NULL,
+                    ?,
+                    ?,
+                    ?
+                ) ON CONFLICT (guild_id)
+                DO UPDATE SET 
+                    roleandchannelpoints = ?,
+                    role_channel_id = ?,
+                    channel_role_id = ?
+                    WHERE guild_id = ?
+            ''',
+            (
+                interaction.guild.id,
+                amount,
+                role.id,
+                channel.id,
+                amount,
+                role.id,
+                channel.id,
+                interaction.guild.id,
+            )
+        ).connection.commit()
+
+        await interaction.response.send_message(embed=discord.Embed(description="✅ Points given per message sent in {} when having {} role has been set to `{}`!".format(channel.mention, role.mention, amount), color=discord.Color.green()), ephemeral=True)
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(Activity(bot))
