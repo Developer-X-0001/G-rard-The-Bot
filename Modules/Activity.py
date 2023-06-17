@@ -196,5 +196,39 @@ class Activity(commands.Cog):
 
         await interaction.response.send_message(embed=discord.Embed(description="✅ Points given per message sent in {} when having {} role has been set to `{}`!".format(channel.mention, role.mention, amount), color=discord.Color.green()), ephemeral=True)
 
+    @activity_group.command(name="set-invite-points", description="Set how many points are given per invite.")
+    async def set_invite_points(self, interaction: discord.Interaction, amount: int):
+        if amount <= 0:
+            await interaction.response.send_message(embed=discord.Embed(description="❌ **Amount must be greater than zero!**", color=discord.Color.red()), ephemeral=True)
+            return
+        
+        self.database.execute(
+            '''
+                INSERT INTO ActivityConfig VALUES (
+                    ?,
+                    ?,
+                    1,
+                    0,
+                    NULL,
+                    0,
+                    NULL,
+                    0,
+                    NULL,
+                    NULL
+                ) ON CONFLICT (guild_id)
+                DO UPDATE SET 
+                    invitepoints = ?
+                    WHERE guild_id = ?
+            ''',
+            (
+                interaction.guild.id,
+                amount,
+                amount,
+                interaction.guild.id,
+            )
+        ).connection.commit()
+
+        await interaction.response.send_message(embed=discord.Embed(description="✅ Points given per invite has been set to `{}`!".format(amount), color=discord.Color.green()), ephemeral=True)
+
 async def setup(bot: commands.Bot):
     await bot.add_cog(Activity(bot))
