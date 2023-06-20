@@ -208,6 +208,19 @@ class Bot(commands.Bot):
             '''
         )
 
+        sqlite3.connect("./Databases/shop.sqlite").execute(
+            '''
+                CREATE TABLE IF NOT EXISTS Items (
+                    id TEXT,
+                    name TEXT,
+                    price INTEGER,
+                    available TEXT,
+                    role INTEGER,
+                    Primary Key (name)
+                )
+            '''
+        )
+
         database = sqlite3.connect("./Databases/reactionroles.sqlite").execute(
             '''
                 CREATE TABLE IF NOT EXISTS ReactionRoles (
