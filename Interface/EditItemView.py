@@ -38,12 +38,9 @@ class ItemEditor(View):
     def __init__(self, code: str):
         self.item_id = code
         super().__init__(timeout=None)
+        self.add_item(AvailabilitySelector(code=code))
     
-    @button(label="Edit Information", style=ButtonStyle.blurple)
-    async def edit_info_button(self, interaction: discord.Interaction, button: Button):
-        await interaction.response.send_modal(EditInfoModal(code=self.item_id))
-    
-    @select(cls=RoleSelect, placeholder="Edit role...", min_values=1, max_values=1)
+    @select(cls=RoleSelect, placeholder="Edit role...", min_values=1, max_values=1, row=1)
     async def panelRoleSelect(self, interaction: discord.Interaction, select: RoleSelect):
         database.execute("UPDATE Items SET role = ? WHERE id = ?", (select.values[0].id, self.item_id,)).connection.commit()
         item_embed = interaction.message.embeds[0]
@@ -54,6 +51,10 @@ class ItemEditor(View):
             index=3
         )
         await interaction.response.edit_message(embed=item_embed)
+    
+    @button(label="Edit Information", style=ButtonStyle.blurple, row=2)
+    async def edit_info_button(self, interaction: discord.Interaction, button: Button):
+        await interaction.response.send_modal(EditInfoModal(code=self.item_id))
 
 class AvailabilitySelector(Select):
     def __init__(self, code: str):
@@ -64,7 +65,7 @@ class AvailabilitySelector(Select):
             discord.SelectOption(label="No", value='no')
         ]
 
-        super().__init__(placeholder="Edit availability...", min_values=1, max_values=1, options=options)
+        super().__init__(placeholder="Edit availability...", min_values=1, max_values=1, options=options, row=0)
 
     async def callback(self, interaction: discord.Interaction):
         item_embed = interaction.message.embeds[0]
@@ -108,7 +109,7 @@ class EditInfoModal(Modal, title="Item Information Editor"):
         )
         item_embed.set_field_at(
             name="Price:",
-            value=self.nameInput.value,
+            value=self.priceInput.value,
             inline=False,
             index=1
         )
