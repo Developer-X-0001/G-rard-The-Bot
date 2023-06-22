@@ -42,9 +42,10 @@ class ItemDelete(View):
     @button(label="Delete", style=ButtonStyle.red)
     async def item_delete_button(self, interaction: discord.Interaction, button: Button):
         database.execute("DELETE FROM Items WHERE id = ?", (self.item_id,)).connection.commit()
-        await interaction.response.send_message(embed=discord.Embed(description="✅ Successfully deleted item with id: **`{}`**".format(self.item_id), color=discord.Color.green()), ephemeral=True)
         data = database.execute("SELECT * FROM Items").fetchone()
         if data is None:
-            await interaction.message.edit(embed=discord.Embed(description="❌ There aren't any items available to delete!", color=discord.Color.red()))
+            await interaction.response.edit_message(embed=discord.Embed(description="❌ There aren't any items available to delete!", color=discord.Color.red()), view=None)
         else:
-            await interaction.message.edit(embed=discord.Embed(description="Please select an item to delete.", color=discord.Color.blue()), view=DeleteItemSelectorView())
+            await interaction.response.edit_message(embed=discord.Embed(description="Please select an item to delete.", color=discord.Color.blue()), view=DeleteItemSelectorView())
+
+        await interaction.followup.send(embed=discord.Embed(description="✅ Successfully deleted item with id: **`{}`**".format(self.item_id), color=discord.Color.green()), ephemeral=True)
