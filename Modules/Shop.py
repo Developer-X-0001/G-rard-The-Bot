@@ -6,7 +6,8 @@ import discord
 
 from discord.ext import commands
 from discord import app_commands
-from Interface.EditItemView import ItemSelectorView
+from Interface.EditItemView import EditItemSelectorView
+from Interface.DeleteItemView import DeleteItemSelectorView
 
 class Shop(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -35,7 +36,15 @@ class Shop(commands.Cog):
         if data is None:
             await interaction.response.send_message(embed=discord.Embed(description="❌ There aren't any items available to edit!", color=discord.Color.red()), ephemeral=True)
         else:
-            await interaction.response.send_message(embed=discord.Embed(description="Please select an item to edit it's information.", color=discord.Color.blue()), view=ItemSelectorView(), ephemeral=True)
+            await interaction.response.send_message(embed=discord.Embed(description="Please select an item to edit it's information.", color=discord.Color.blue()), view=EditItemSelectorView(), ephemeral=True)
+
+    @shop_group.command(name="delete-items", description="Delete previously made items.")
+    async def delete_item(self, interaction: discord.Interaction):
+        data = self.database.execute("SELECT * FROM Items").fetchone()
+        if data is None:
+            await interaction.response.send_message(embed=discord.Embed(description="❌ There aren't any items available to delete!", color=discord.Color.red()), ephemeral=True)
+        else:
+            await interaction.response.send_message(embed=discord.Embed(description="Please select an item to delete.", color=discord.Color.blue()), view=DeleteItemSelectorView(), ephemeral=True)
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(Shop(bot))

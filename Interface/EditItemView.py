@@ -6,7 +6,7 @@ from discord.ui import Modal, TextInput, Select, RoleSelect, View, Button, butto
 
 database = sqlite3.connect("./Databases/shop.sqlite")
 
-class ItemSelectorView(View):
+class EditItemSelectorView(View):
     def __init__(self):
         super().__init__(timeout=None)
         self.add_item(ItemSelector())
@@ -55,6 +55,10 @@ class ItemEditor(View):
     @button(label="Edit Information", style=ButtonStyle.blurple, row=2)
     async def edit_info_button(self, interaction: discord.Interaction, button: Button):
         await interaction.response.send_modal(EditInfoModal(code=self.item_id))
+    
+    @button(label="Save", style=ButtonStyle.green, row=3)
+    async def edit_save_button(self, interaction: discord.Interaction, button: Button):
+        await interaction.response.send_message(embed=discord.Embed(description="Please select an item to edit it's information.", color=discord.Color.blue()), view=EditItemSelectorView(), ephemeral=True)
 
 class AvailabilitySelector(Select):
     def __init__(self, code: str):
