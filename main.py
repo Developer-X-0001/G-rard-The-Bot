@@ -219,6 +219,24 @@ class Bot(commands.Bot):
                     Primary Key (name)
                 )
             '''
+        ).execute(
+            '''
+                CREATE TABLE IF NOT EXISTS RedeemSettings (
+                    guild_id INTEGER,
+                    redeem_channel INTEGER,
+                    redeem_role INTEGER,
+                    Primary Key (guild_id)
+                )
+            '''
+        ).execute(
+            '''
+                CREATE TABLE IF NOT EXISTS RedeemLogs (
+                    redeemed_by INTEGER,
+                    delivered_by INTEGER,
+                    redeemed_at INTEGER,
+                    item_id INTEGER
+                )
+            '''
         )
 
         database = sqlite3.connect("./Databases/reactionroles.sqlite").execute(

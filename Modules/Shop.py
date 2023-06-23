@@ -46,5 +46,21 @@ class Shop(commands.Cog):
         else:
             await interaction.response.send_message(embed=discord.Embed(description="Please select an item to delete.", color=discord.Color.blue()), view=DeleteItemSelectorView(), ephemeral=True)
 
+    @shop_group.command(name="set-redeem-role", description="Set a role to be pinged when someone tries to redeem an item.")
+    async def set_redeem_role(self, interaction: discord.Interaction, role: discord.Role):
+        self.database.execute("INSERT INTO RedeemSettings VALUES (?, NULL, ?) ON CONFLICT (guild_id) DO UPDATE SET redeem_role = ? WHERE guild_id = ?",
+                              (interaction.guild.id, role.id, role.id, interaction.guild.id,)
+        ).connection.commit()
+
+        await interaction.response.send_message(embed=discord.Embed(description="✅ Successfully set {} role as redeem manager role.".format(role.mention), color=discord.Color.green()), ephemeral=True)
+
+    @shop_group.command(name="set-redeem-logs-channel", description="Set a channel to log every item redeem.")
+    async def set_redeem_logs_channel(self, interaction: discord.Interaction, channel: discord.TextChannel):
+        self.database.execute("INSERT INTO RedeemSettings VALUES (?, ?, NULL) ON CONFLICT (guild_id) DO UPDATE SET redeem_channel = ? WHERE guild_id = ?",
+                              (interaction.guild.id, channel.id, channel.id, interaction.guild.id,)
+        ).connection.commit()
+
+        await interaction.response.send_message(embed=discord.Embed(description="✅ Successfully set {} channel for logging.".format(channel.mention), color=discord.Color.green()), ephemeral=True)
+
 async def setup(bot: commands.Bot):
     await bot.add_cog(Shop(bot))
