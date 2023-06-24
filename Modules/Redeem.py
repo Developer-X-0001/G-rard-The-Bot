@@ -27,7 +27,7 @@ class Redeem(commands.Cog):
         item_embed.add_field(name="Role:", value=role.mention, inline=False)
         item_embed.set_footer(text="You must have the required role to redeem this item!")
 
-        await interaction.response.send_message(embed=item_embed, view=RedeemButton(item_id=item))
+        await interaction.response.send_message(embed=item_embed, view=RedeemButton(item_id=item), ephemeral=True)
     
     @_redeem.autocomplete('item')
     async def redeem_autocomplete_callback(self, interaction: discord.Interaction, current: str):
