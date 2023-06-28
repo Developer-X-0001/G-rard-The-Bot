@@ -21,14 +21,18 @@ class Shop(commands.Cog):
         app_commands.Choice(name="Yes", value='yes'),
         app_commands.Choice(name="No", value='no')
     ])
-    async def create_item(self, interaction: discord.Interaction, name: str, price: int, available: app_commands.Choice[str], role: discord.Role):
-        data = self.database.execute("SELECT name FROM Items WHERE name = ?", (name,)).fetchone()
-        if data is None:
-            id = ''.join([random.choice(string.ascii_letters + string.digits) for n in range(6)]).upper()
-            self.database.execute("INSERT INTO Items VALUES (?, ?, ?, ?, ?)", (id, name, price, available.value, role.id,)).connection.commit()
-            await interaction.response.send_message(embed=discord.Embed(description="✅ Successfully created a new item: **`{}`**".format(name), color=discord.Color.green()), ephemeral=True)
+    async def create_item(self, interaction: discord.Interaction, name: str, price: int, available: app_commands.Choice[str], image_link: str, role: discord.Role):
+        if image_link.startswith('http') and image_link.endswith('.png') or image_link.endswith('.jpg'):
+            data = self.database.execute("SELECT name FROM Items WHERE name = ?", (name,)).fetchone()
+            if data is None:
+                id = ''.join([random.choice(string.ascii_letters + string.digits) for n in range(6)]).upper()
+                self.database.execute("INSERT INTO Items VALUES (?, ?, ?, ?, ?, ?)", (id, name, price, available.value, image_link, role.id,)).connection.commit()
+                await interaction.response.send_message(embed=discord.Embed(description="✅ Successfully created a new item: **`{}`**".format(name), color=discord.Color.green()), ephemeral=True)
+            else:
+                await interaction.response.send_message(embed=discord.Embed(description="❌ Item with name **`{}`** already exists!".format(name), color=discord.Color.red()), ephemeral=True)
         else:
-            await interaction.response.send_message(embed=discord.Embed(description="❌ Item with name **`{}`** already exists!".format(name), color=discord.Color.red()), ephemeral=True)
+            await interaction.response.send_message(embed=discord.Embed(description="❌ Image link must end with `.png` or `.jpg` extension!", color=discord.Color.red()), ephemeral=True)
+            return
 
     @shop_group.command(name="edit-items", description="Edit previously made items.")
     async def edit_item(self, interaction: discord.Interaction):

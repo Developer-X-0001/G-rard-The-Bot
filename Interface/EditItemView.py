@@ -103,6 +103,13 @@ class EditInfoModal(Modal, title="Item Information Editor"):
         required=True
     )
 
+    imageInput = TextInput(
+        label="Image link:",
+        style=TextStyle.short,
+        placeholder="Image link, ending with .png and .jpg only!",
+        required=False
+    )
+
     async def on_submit(self, interaction: discord.Interaction):
         item_embed = interaction.message.embeds[0]
         item_embed.set_field_at(
@@ -117,6 +124,15 @@ class EditInfoModal(Modal, title="Item Information Editor"):
             inline=False,
             index=1
         )
-
-        database.execute("UPDATE Items SET name = ?, price = ? WHERE id = ?", (self.nameInput.value, self.nameInput.value, self.item_id))
+        if self.imageInput.value is None:
+            database.execute("UPDATE Items SET name = ?, price = ? WHERE id = ?", (self.nameInput.value, self.nameInput.value, self.item_id)).connection.commit()
+        else:
+            image_link = self.imageInput.value
+            if image_link.startswith('http') and image_link.endswith('.png') or image_link.endswith('.jpg'):
+                item_embed.set_thumbnail(url=image_link)
+                database.execute("UPDATE Items SET name = ?, price = ?, image_link = ? WHERE id = ?", (self.nameInput.value, self.nameInput.value, image_link, self.item_id)).connection.commit()
+            else:
+                await interaction.response.send_message(embed=discord.Embed(description="❌ Image link must end with `.png` or `.jpg` extension!", color=discord.Color.red()), ephemeral=True)
+                return
+            
         await interaction.response.edit_message(embed=item_embed)

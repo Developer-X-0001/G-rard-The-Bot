@@ -5,6 +5,7 @@ import discord
 from discord.ext import commands
 from Interface.SelectMenus import RoleSelector
 from Modules.Report import JoinReport, ReportButtons
+from Interface.RedeemRequestView import RedeemRequestView
 from Interface.SuggestionButtons import SuggestionButtonsView
 
 intents = discord.Intents.all()
@@ -215,6 +216,7 @@ class Bot(commands.Bot):
                     name TEXT,
                     price INTEGER,
                     available TEXT,
+                    image_link TEXT,
                     role INTEGER,
                     Primary Key (name)
                 )
@@ -237,6 +239,18 @@ class Bot(commands.Bot):
                     item_id INTEGER
                 )
             '''
+        ).execute(
+            '''
+                CREATE TABLE IF NOT EXISTS CurrentRedeems (
+                    message_id INTEGER,
+                    item_id INTEGER,
+                    thread_id INTEGER,
+                    buyer_id INTEGER,
+                    handler_id INTEGER,
+                    status TEXT,
+                    Primary Key (message_id)
+                )
+            '''
         )
 
         database = sqlite3.connect("./Databases/reactionroles.sqlite").execute(
@@ -255,6 +269,7 @@ class Bot(commands.Bot):
         data = database.execute("SELECT panel_id FROM ReactionRoles").fetchall()
         self.add_view(JoinReport())
         self.add_view(ReportButtons())
+        self.add_view(RedeemRequestView())
         self.add_view(SuggestionButtonsView())
         if data is not None:
             for i in data:

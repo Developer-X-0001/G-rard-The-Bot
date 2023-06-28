@@ -13,9 +13,9 @@ class Redeem(commands.Cog):
 
     @app_commands.command(name="redeem", description="Redeem a listed item.")
     async def _redeem(self, interaction: discord.Interaction, item: str):
-        data = self.database.execute("SELECT name, price, available, role FROM Items WHERE id = ?", (item,)).fetchone()
+        data = self.database.execute("SELECT name, price, available, image_link, role FROM Items WHERE id = ?", (item,)).fetchone()
         
-        role = interaction.guild.get_role(data[3])
+        role = interaction.guild.get_role(data[4])
 
         item_embed = discord.Embed(
             title="Editing Item",
@@ -26,6 +26,7 @@ class Redeem(commands.Cog):
         item_embed.add_field(name="Availability:", value="Available" if data[2] == 'yes' else 'Not Available', inline=False)
         item_embed.add_field(name="Role:", value=role.mention, inline=False)
         item_embed.set_footer(text="You must have the required role to redeem this item!")
+        item_embed.set_thumbnail(url=data[3])
 
         await interaction.response.send_message(embed=item_embed, view=RedeemButton(item_id=item), ephemeral=True)
     

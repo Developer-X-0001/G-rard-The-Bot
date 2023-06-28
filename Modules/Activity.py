@@ -10,15 +10,15 @@ class Activity(commands.Cog):
         self.bot = bot
         self.database = sqlite3.connect("./Databases/activity.sqlite")
     
-    activity_group = app_commands.Group(name="activity", description="Commands related to activity system.")
+    activity_group = app_commands.Group(name="activities", description="Commands related to activity system.")
 
-    @app_commands.command(name="actvity", description="Shows every information about someone's participation.")
+    @app_commands.command(name="activity", description="Shows every information about someone's participation.")
     async def _activity(self, interaction: discord.Interaction, user: discord.Member=None):
         if user is None:
             user = interaction.user
 
-        data = self.database.execute("SELECT current_points, total_points, total_messages, message_points, total_invites, invite_points, items_shopped FROM UserProfiles WHERE user_id = ?", (interaction.user.id,)).connection.commit()
-        
+        data = self.database.execute("SELECT current_points, total_points, total_messages, message_points, total_invites, invite_points, items_shopped FROM UserProfiles WHERE user_id = ?", (interaction.user.id,)).fetchone()
+
         current_points = 0 if data is None else data[0]
         total_points = 0 if data is None else data[1]
         total_messages = 0 if data is None else data[2]
