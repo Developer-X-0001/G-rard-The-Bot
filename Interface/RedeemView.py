@@ -33,6 +33,7 @@ class RedeemButton(View):
                     await interaction.response.send_message(embed=discord.Embed(description="⚠ Redeem settings aren't configured yet!", color=discord.Color.yellow()), ephemeral=True)
                     return
                 
+                await interaction.response.defer()
                 redeem_manager_role = interaction.guild.get_role(redeem_settings[1])
                 redeem_logs_channel = interaction.guild.get_channel(redeem_settings[0])
 
@@ -82,7 +83,7 @@ class RedeemButton(View):
                         'pending'
                     )
                 ).connection.commit()
-                await interaction.response.edit_message(embed=discord.Embed(description="Your [redeem request]({}) has been created.".format(redeem_thread.jump_url), color=discord.Color.blue()), view=None)
+                await interaction.edit_original_response(embed=discord.Embed(description="Your [redeem request]({}) has been created.".format(redeem_thread.jump_url), color=discord.Color.blue()), view=None)
         
-        else:
-            await interaction.response.edit_message(embed=discord.Embed(description="❌ You must have {} role to redeem this item!".format(role.mention), color=discord.Color.red()))
+            else:
+                await interaction.response.edit_message(embed=discord.Embed(description="❌ You must have {} role to redeem this item!".format(role.mention), color=discord.Color.red()), view=None)

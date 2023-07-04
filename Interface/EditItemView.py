@@ -21,7 +21,7 @@ class ItemSelector(Select):
         super().__init__(placeholder='Select an item to edit...', min_values=1, max_values=1, options=options, row=0)
     
     async def callback(self, interaction: discord.Interaction):
-        data = database.execute("SELECT name, price, available, role FROM Items WHERE id = ?", (self.values[0],)).fetchone()
+        data = database.execute("SELECT name, price, available, role, image_link FROM Items WHERE id = ?", (self.values[0],)).fetchone()
         role = interaction.guild.get_role(data[3])
         item_embed = discord.Embed(
             title="Editing Item",
@@ -31,6 +31,8 @@ class ItemSelector(Select):
         item_embed.add_field(name="Price:", value=data[1], inline=False)
         item_embed.add_field(name="Availability:", value="Available" if data[2] == 'yes' else 'Not Available', inline=False)
         item_embed.add_field(name="Role:", value=role.mention, inline=False)
+        if data[4]:
+            item_embed.set_thumbnail(url=data[4])
 
         await interaction.response.edit_message(embed=item_embed, view=ItemEditor(code=self.values[0]))
 
@@ -52,13 +54,21 @@ class ItemEditor(View):
         )
         await interaction.response.edit_message(embed=item_embed)
     
-    @button(label="Edit Information", style=ButtonStyle.blurple, row=2)
-    async def edit_info_button(self, interaction: discord.Interaction, button: Button):
-        await interaction.response.send_modal(EditInfoModal(code=self.item_id))
+    @button(label="Edit Name", style=ButtonStyle.blurple, row=2)
+    async def edit_name_button(self, interaction: discord.Interaction, button: Button):
+        await interaction.response.send_modal(EditNameModal(code=self.item_id))
+
+    @button(label="Edit Price", style=ButtonStyle.blurple, row=2)
+    async def edit_price_button(self, interaction: discord.Interaction, button: Button):
+        await interaction.response.send_modal(EditPriceModal(code=self.item_id))
+
+    @button(label="Edit Image", style=ButtonStyle.blurple, row=2)
+    async def edit_image_button(self, interaction: discord.Interaction, button: Button):
+        await interaction.response.send_modal(EditImageModal(code=self.item_id))
     
-    @button(label="Save", style=ButtonStyle.green, row=3)
+    @button(label="Go Back", style=ButtonStyle.gray, row=3)
     async def edit_save_button(self, interaction: discord.Interaction, button: Button):
-        await interaction.response.send_message(embed=discord.Embed(description="Please select an item to edit it's information.", color=discord.Color.blue()), view=EditItemSelectorView(), ephemeral=True)
+        await interaction.response.edit_message(embed=discord.Embed(description="Please select an item to edit it's information.", color=discord.Color.blue()), view=EditItemSelectorView(), ephemeral=True)
 
 class AvailabilitySelector(Select):
     def __init__(self, code: str):
@@ -84,7 +94,7 @@ class AvailabilitySelector(Select):
         await interaction.response.edit_message(embed=item_embed)
 
 
-class EditInfoModal(Modal, title="Item Information Editor"):
+class EditNameModal(Modal, title="Item Information Editor"):
     def __init__(self, code: str):
         self.item_id = code
         super().__init__(timeout=None)
@@ -96,20 +106,6 @@ class EditInfoModal(Modal, title="Item Information Editor"):
         required=True
     )
 
-    priceInput = TextInput(
-        label="Price:",
-        style=TextStyle.short,
-        placeholder="(Digit only!) Type item price...",
-        required=True
-    )
-
-    imageInput = TextInput(
-        label="Image link:",
-        style=TextStyle.short,
-        placeholder="Image link, ending with .png and .jpg only!",
-        required=False
-    )
-
     async def on_submit(self, interaction: discord.Interaction):
         item_embed = interaction.message.embeds[0]
         item_embed.set_field_at(
@@ -118,21 +114,61 @@ class EditInfoModal(Modal, title="Item Information Editor"):
             inline=False,
             index=0
         )
+        
+        data = database.execute("SELECT name FROM Items WHERE name = ?", (self.nameInput.value,)).fetchone()
+        if data is None:
+            database.execute("UPDATE Items SET name = ? WHERE id = ?", (self.nameInput.value, self.item_id,)).connection.commit()
+            await interaction.response.edit_message(embed=item_embed)
+
+        else:
+            await interaction.response.send_message(embed=discord.Embed(description="❌ Item with name **`{}`** already exists!".format(self.nameInput.value), color=discord.Color.red()), ephemeral=True)
+
+class EditPriceModal(Modal, title="Item Information Editor"):
+    def __init__(self, code: str):
+        self.item_id = code
+        super().__init__(timeout=None)
+
+    priceInput = TextInput(
+        label="Price:",
+        style=TextStyle.short,
+        placeholder="DIGIT ONLY! Type item price...",
+        required=True
+    )
+
+    async def on_submit(self, interaction: discord.Interaction):
+        item_embed = interaction.message.embeds[0]
         item_embed.set_field_at(
             name="Price:",
             value=self.priceInput.value,
             inline=False,
             index=1
         )
-        if self.imageInput.value is None:
-            database.execute("UPDATE Items SET name = ?, price = ? WHERE id = ?", (self.nameInput.value, self.nameInput.value, self.item_id)).connection.commit()
+        
+        if self.priceInput.value.isdigit():
+            database.execute("UPDATE Items SET price = ? WHERE id = ?", (self.priceInput.value, self.item_id,)).connection.commit()
+            await interaction.response.edit_message(embed=item_embed)
+
         else:
-            image_link = self.imageInput.value
-            if image_link.startswith('http') and image_link.endswith('.png') or image_link.endswith('.jpg'):
-                item_embed.set_thumbnail(url=image_link)
-                database.execute("UPDATE Items SET name = ?, price = ?, image_link = ? WHERE id = ?", (self.nameInput.value, self.nameInput.value, image_link, self.item_id)).connection.commit()
-            else:
-                await interaction.response.send_message(embed=discord.Embed(description="❌ Image link must end with `.png` or `.jpg` extension!", color=discord.Color.red()), ephemeral=True)
-                return
-            
-        await interaction.response.edit_message(embed=item_embed)
+            await interaction.response.send_message(embed=discord.Embed(description="❌ Item price must be a digit!", color=discord.Color.red()), ephemeral=True)
+
+class EditImageModal(Modal, title="Item Information Editor"):
+    def __init__(self, code: str):
+        self.item_id = code
+        super().__init__(timeout=None)
+
+    imageInput = TextInput(
+        label="Image link:",
+        style=TextStyle.short,
+        placeholder="Type a valid image url...",
+        required=True
+    )
+
+    async def on_submit(self, interaction: discord.Interaction):
+        item_embed = interaction.message.embeds[0]
+        try:
+            item_embed.set_thumbnail(url=self.imageInput.value)
+            database.execute("UPDATE Items SET image_link = ? WHERE id = ?", (self.imageInput.value, self.item_id,)).connection.commit()
+            await interaction.response.edit_message(embed=item_embed)
+
+        except:
+            await interaction.response.send_message(embed=discord.Embed(description="❌ Invalid image link!", color=discord.Color.red()), ephemeral=True)
