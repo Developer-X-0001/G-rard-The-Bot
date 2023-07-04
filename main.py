@@ -49,7 +49,47 @@ class Bot(commands.Bot):
                     time INTEGER
                 )
             '''
+        )
+
+        sqlite3.connect("./Databases/suggestions.sqlite").execute(
+            '''
+                CREATE TABLE IF NOT EXISTS Config (
+                    guild_id INTEGER,
+                    suggestions_channel_id INTEGER,
+                    approved_channel_id INTEGER,
+                    declined_channel_id INTEGER,
+                    anonymous TEXT,
+                    dm_status TEXT,
+                    suggestions_queue TEXT,
+                    thread_status TEXT,
+                    Primary Key (guild_id)
+                )
+            '''
         ).execute(
+            '''
+                CREATE TABLE IF NOT EXISTS Queue (
+                    suggestion_id TEXT,
+                    user_id INTEGER,
+                    suggestion TEXT,
+                    anonymous TEXT,
+                    Primary Key (suggestion_id)
+                )
+            '''
+        ).execute(
+            '''
+                CREATE TABLE IF NOT EXISTS Suggestions (
+                    message_id INTEGER,
+                    suggestion_id TEXT,
+                    user_id INTEGER,
+                    suggestion TEXT,
+                    anonymous TEXT,
+                    approver_id INTEGER,
+                    Primary Key (message_id)
+                )
+            '''
+        )
+
+        sqlite3.connect("./Databases/polls.sqlite").execute(
             '''
                 CREATE TABLE IF NOT EXISTS NormalPolls (
                     poll_id TEXT,
@@ -112,44 +152,6 @@ class Bot(commands.Bot):
                     answer19 TEXT,
                     answer20 TEXT,
                     Primary Key (poll_id)
-                )
-            '''
-        )
-
-        sqlite3.connect("./Databases/suggestions.sqlite").execute(
-            '''
-                CREATE TABLE IF NOT EXISTS Config (
-                    guild_id INTEGER,
-                    suggestions_channel_id INTEGER,
-                    approved_channel_id INTEGER,
-                    declined_channel_id INTEGER,
-                    anonymous TEXT,
-                    dm_status TEXT,
-                    suggestions_queue TEXT,
-                    thread_status TEXT,
-                    Primary Key (guild_id)
-                )
-            '''
-        ).execute(
-            '''
-                CREATE TABLE IF NOT EXISTS Queue (
-                    suggestion_id TEXT,
-                    user_id INTEGER,
-                    suggestion TEXT,
-                    anonymous TEXT,
-                    Primary Key (suggestion_id)
-                )
-            '''
-        ).execute(
-            '''
-                CREATE TABLE IF NOT EXISTS Suggestions (
-                    message_id INTEGER,
-                    suggestion_id TEXT,
-                    user_id INTEGER,
-                    suggestion TEXT,
-                    anonymous TEXT,
-                    approver_id INTEGER,
-                    Primary Key (message_id)
                 )
             '''
         )
