@@ -14,7 +14,7 @@ class Polls(commands.Cog):
         self.bot = bot
         self.database = sqlite3.connect("./Databases/polls.sqlite")
 
-    @app_commands.command(name="poll", description="Create a timed poll with end date.")
+    @app_commands.command(name="poll", description="Create a normal poll.")
     @app_commands.choices(anonymous=[
         app_commands.Choice(name="True", value=1),
         app_commands.Choice(name="False", value=0)
@@ -137,7 +137,7 @@ class Polls(commands.Cog):
             for choice in choices:
                 await message.add_reaction(config.ALPHABETS[choices.index(choice)])
 
-    @app_commands.command(name="timepoll", description="Create a normal poll")
+    @app_commands.command(name="timepoll", description="Create a timed poll with end date.")
     @app_commands.choices(anonymous=[
         app_commands.Choice(name="True", value=1),
         app_commands.Choice(name="False", value=0)
