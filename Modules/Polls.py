@@ -8,6 +8,7 @@ import datetime
 
 from discord.ext import commands
 from discord import app_commands
+from Functions.GeneratePercentageBar import create_percentage_bar
 
 class Polls(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -136,6 +137,22 @@ class Polls(commands.Cog):
         else:
             for choice in choices:
                 await message.add_reaction(config.ALPHABETS[choices.index(choice)])
+        
+        self.database.execute("INSERT INTO NormalPolls VALUES (?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, NULL, NULL)",
+            (
+                id,
+                interaction.channel.id,
+                message.id,
+                interaction.user.id,
+                'open',
+                round(datetime.datetime.now().timestamp()),
+                question,
+                maxchoices,
+                allowedrole.id if allowedrole else None,
+                text if text else None,
+                True if anonymous is not None and anonymous.value == 1 else False,
+            )
+        ).connection.commit()
 
     @app_commands.command(name="timepoll", description="Create a timed poll with end date.")
     @app_commands.choices(anonymous=[
@@ -277,6 +294,93 @@ class Polls(commands.Cog):
                 color=discord.Color.orange()
             )
             await interaction.response.send_message(embed=error_embed, ephemeral=True)
+    
+    @app_commands.command(name="closepoll", description="Close a poll so that no more votes are counted")
+    async def close_poll(self, interaction: discord.Interaction, poll_id: str):
+        timed_poll_data = self.database.execute("SELECT channel_id, message_id, user_id, time, maxchoices, allowedrole, anonymous FROM TimedPolls WHERE poll_id = ?", (poll_id,)).fetchone()
+        if timed_poll_data is None:
+            normal_poll_data = self.database.execute("SELECT channel_id, message_id, user_id, maxchoices, allowedrole, anonymous FROM NormalPolls WHERE poll_id = ?", (poll_id,)).fetchone()
+            channel = interaction.guild.get_channel(normal_poll_data[0])
+            message = await channel.fetch_message(normal_poll_data[1])
+            user = interaction.guild.get_member(normal_poll_data[2])
+            reactions = message.reactions
+            allowedrole = interaction.guild.get_role(normal_poll_data[4])
+            anonymous = True if normal_poll_data[5] and normal_poll_data[5] == 'true' else False
+            maxchoices = '1 Allowed Choice' if normal_poll_data[3] is None or normal_poll_data[3] == 1 else '{} Allowed Choices'.format(normal_poll_data[3])
+            poll_embed = message.embeds[0]
+            poll_embed.color = discord.Color.red()
+
+            choices = {}
+            users = []
+            for reaction in reactions:
+                choices.update({f'{reaction.emoji}': reaction.count - 1})
+                reaction_users = [user.id async for user in reaction.users()]
+                users = list(set(users) | set(reaction_users))
+
+            users.remove(self.bot.user.id) if self.bot.user.id in users else None
+            poll_embed.insert_field_at(
+                index=2,
+                name="Final Result:",
+                value=f"{create_percentage_bar(choices=choices)}{len(users)} user{'s' if len(users) > 1 else ''} voted",
+                inline=False
+            )
+            poll_embed.set_field_at(
+                index=3,
+                name="Settings:",
+                value=f"{poll_embed.fields[3].value}\n\n🔒 No other votes allowed",
+                inline=False
+            )
+
+            await message.edit(embed=poll_embed)
+            await message.clear_reactions()
+
+            await interaction.response.send_message(embed=discord.Embed(title="Poll Closed", description="The poll with ID **{}** was closed!\nNo more votes are allowed and the result is now displayed in the poll.".format(poll_id), color=discord.Color.purple()), ephemeral=True)
+
+        else:
+            print()
+    
+    @close_poll.autocomplete('poll_id')
+    async def close_poll_autocomplete(self, interaction: discord.Interaction, current: str):
+        normal_polls_data = self.database.execute("SELECT poll_id FROM NormalPolls WHERE status = ?", ('open',)).fetchall()
+        timed_polls_data = self.database.execute("SELECT poll_id FROM TimedPolls WHERE status = ?", ('open',)).fetchall()
+
+        data = normal_polls_data + timed_polls_data
+
+        return [app_commands.Choice(name='ID: {}'.format(entry[0]), value=entry[0]) for entry in data if current in entry[0]]
+
+    @app_commands.command(name="listpolls", description="Show the polls from the current server.")
+    async def list_polls(self, interaction: discord.Interaction, poll_id: str=None):
+        if poll_id is None:
+            embed = discord.Embed(
+                description="Select a poll from the dropdown menu to view it's information.",
+                color=discord.Color.blue()
+            )
+    
+    @list_polls.autocomplete('poll_id')
+    async def list_polls_autocomplete(self, interaction: discord.Interaction, current: str):
+        normal_polls_data = self.database.execute("SELECT poll_id FROM NormalPolls WHERE status = ?", ('open',)).fetchall()
+        timed_polls_data = self.database.execute("SELECT poll_id FROM TimedPolls WHERE status = ?", ('open',)).fetchall()
+
+        data = normal_polls_data + timed_polls_data
+
+        return [app_commands.Choice(name='ID: {}'.format(entry[0]), value=entry[0]) for entry in data if current in entry[0]]
+
+    @commands.command(name='check')
+    async def _check(self, context: commands.Context, msg_id: int):
+        message = await context.channel.fetch_message(msg_id)
+        reactions = message.reactions
+
+        choices = {}
+        users = []
+        for reaction in reactions:
+            choices.update({f'{reaction.emoji}': reaction.count - 1})
+            reaction_users = [user.id async for user in reaction.users()]
+            users = list(set(users) | set(reaction_users))
+
+        users.remove(self.bot.user.id) if self.bot.user.id in users else None
+            
+        
+        await context.send(content=f"{create_percentage_bar(choices=choices)}\n{len(users)} user(s) voted")
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(Polls(bot))
