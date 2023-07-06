@@ -8,6 +8,7 @@ import datetime
 
 from discord.ext import commands
 from discord import app_commands
+from Interface.PollSelectorView import PollSelectorView
 from Functions.GeneratePercentageBar import create_percentage_bar
 
 class Polls(commands.Cog):
@@ -92,14 +93,16 @@ class Polls(commands.Cog):
             value=question,
             inline=False
         )
+        formatted_choices = ""
         if choices == []:
             poll_embed.add_field(
                 name="Choices:",
                 value="👍 Yes\n👎 No",
                 inline=False
             )
+            formatted_choices = "👍 Yes\n👎 No"
         else:
-            formatted_choices = ""
+            
             for choice in choices:
                 formatted_choices += f"{config.ALPHABETS[choices.index(choice)]} {choice}\n"
 
@@ -138,7 +141,7 @@ class Polls(commands.Cog):
             for choice in choices:
                 await message.add_reaction(config.ALPHABETS[choices.index(choice)])
         
-        self.database.execute("INSERT INTO NormalPolls VALUES (?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, NULL, NULL)",
+        self.database.execute("INSERT INTO NormalPolls VALUES (?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, NULL)",
             (
                 id,
                 interaction.channel.id,
@@ -147,12 +150,14 @@ class Polls(commands.Cog):
                 'open',
                 round(datetime.datetime.now().timestamp()),
                 question,
-                maxchoices,
+                1 if not maxchoices else maxchoices,
                 allowedrole.id if allowedrole else None,
                 text if text else None,
                 True if anonymous is not None and anonymous.value == 1 else False,
+                formatted_choices,
             )
         ).connection.commit()
+
 
     @app_commands.command(name="timepoll", description="Create a timed poll with end date.")
     @app_commands.choices(anonymous=[
@@ -241,14 +246,15 @@ class Polls(commands.Cog):
                 value=question,
                 inline=False
             )
+            formatted_choices = ""
             if choices == []:
                 poll_embed.add_field(
                     name="Choices:",
                     value="👍 Yes\n👎 No",
                     inline=False
                 )
+                formatted_choices = "👍 Yes\n👎 No"
             else:
-                formatted_choices = ""
                 for choice in choices:
                     formatted_choices += f"{config.ALPHABETS[choices.index(choice)]} {choice}\n"
 
@@ -259,7 +265,7 @@ class Polls(commands.Cog):
                 )
 
             settings = ""
-            settings += "⏲ Ends in <t:{}:R>\n".format(round(datetime.datetime.now().timestamp()) + total_seconds + round(self.bot.latency))
+            settings += "⏰ Ends in <t:{}:R>\n".format(round(datetime.datetime.now().timestamp()) + total_seconds + round(self.bot.latency))
             settings += ":spy: Anonymous Poll\n" if anonymous is not None and anonymous.value == 1 else ""
             settings += "1 Allowed Choice" if maxchoices is None or maxchoices == 1 else "{} Allowed Choices".format(maxchoices)
 
@@ -287,6 +293,25 @@ class Polls(commands.Cog):
             else:
                 for choice in choices:
                     await message.add_reaction(config.ALPHABETS[choices.index(choice)])
+            
+            self.database.execute("INSERT INTO TimedPolls VALUES (?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, NULL)",
+            (
+                id,
+                interaction.channel.id,
+                message.id,
+                interaction.user.id,
+                'open',
+                round(datetime.datetime.now().timestamp()),
+                question,
+                round(datetime.datetime.now().timestamp()) + total_seconds,
+                1 if not maxchoices else maxchoices,
+                allowedrole.id if allowedrole else None,
+                text if text else None,
+                True if anonymous is not None and anonymous.value == 1 else False,
+                formatted_choices,
+            )
+        ).connection.commit()
+            
         else:
             error_embed = discord.Embed(
                 title="Invalid time specification!",
@@ -335,7 +360,7 @@ class Polls(commands.Cog):
             await message.clear_reactions()
 
             await interaction.response.send_message(embed=discord.Embed(title="Poll Closed", description="The poll with ID **{}** was closed!\nNo more votes are allowed and the result is now displayed in the poll.".format(poll_id), color=discord.Color.purple()), ephemeral=True)
-
+            self.database.execute("UPDATE NormalPolls SET status = ?, closed_at = ?, result = ? WHERE poll_id = ?", ('closed', round(datetime.datetime.now().timestamp()), create_percentage_bar(choices=choices), poll_id,)).connection.commit()
         else:
             print()
     
@@ -355,6 +380,7 @@ class Polls(commands.Cog):
                 description="Select a poll from the dropdown menu to view it's information.",
                 color=discord.Color.blue()
             )
+            await interaction.response.send_message(embed=embed, view=PollSelectorView(), ephemeral=True)
     
     @list_polls.autocomplete('poll_id')
     async def list_polls_autocomplete(self, interaction: discord.Interaction, current: str):

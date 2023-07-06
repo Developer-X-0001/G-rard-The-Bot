@@ -268,6 +268,13 @@ class Bot(commands.Bot):
                 print(f'Loaded {filename}')
             if filename.startswith('__'):
                 pass
+        
+        for filename in os.listdir('Tasks'):
+            if filename.endswith('.py'):
+                await self.load_extension(f'Tasks.{filename[:-3]}')
+                print(f'Loaded {filename}')
+            if filename.startswith('__'):
+                pass
 
 bot = Bot()
 
