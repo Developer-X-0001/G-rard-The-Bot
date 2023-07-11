@@ -1,5 +1,4 @@
 import re
-import config
 import sqlite3
 import discord
 import datetime
@@ -32,6 +31,7 @@ class Ban(commands.Cog):
             reason = "Not specified"
 
         data = self.database.execute("SELECT user_id FROM Bans WHERE user_id = ?", (user.id,)).fetchone()
+
         if data:
             await interaction.response.send_message(embed=discord.Embed(description="❌ **{}** is already banned from the server!".format(user.name), color=discord.Color.red()), ephemeral=True)
             return
@@ -106,6 +106,14 @@ class Ban(commands.Cog):
                     color=discord.Color.orange()
                 )
                 await interaction.response.send_message(embed=error_embed, ephemeral=True)
+    
+    @_ban.error
+    async def ban_error(self, interaction: discord.Interaction, error: discord.app_commands.AppCommandError):
+        if isinstance(error, discord.app_commands.errors.MissingPermissions):
+            await interaction.response.send_message(embed=discord.Embed(description="❌ You are missing (Ban Members) permission to run this command!", color=discord.Color.red()), ephemeral=True)
+            return
+        else:
+            raise Exception
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(Ban(bot))

@@ -21,6 +21,19 @@ class Bot(commands.Bot):
         )
 
     async def setup_hook(self):
+        sqlite3.connect("./Databases/settings.sqlite").execute(
+            '''
+                CREATE TABLE IF NOT EXISTS LogChannels (
+                    guild_id INTEGER,
+                    warn_log_channel INTEGER,
+                    ban_log_channel INTEGER,
+                    kick_log_channel INTEGER,
+                    timeout_log_channel INTEGER,
+                    PRIMARY KEY (guild_id)
+                )
+            '''
+        )
+
         sqlite3.connect("./Databases/moderation.sqlite").execute(
             '''
                 CREATE TABLE IF NOT EXISTS Bans (
@@ -53,6 +66,18 @@ class Bot(commands.Bot):
                     thread_id INTEGER,
                     message_id INTEGER,
                     PRIMARY KEY (message_id)
+                )
+            '''
+        ).execute(
+            '''
+                CREATE TABLE IF NOT EXISTS Modlogs (
+                    action_id TEXT,
+                    user_id INTEGER,
+                    mod_id INTEGER,
+                    action TEXT,
+                    action_at INTEGER,
+                    reason TEXT,
+                    PRIMARY KEY (action_id)
                 )
             '''
         )

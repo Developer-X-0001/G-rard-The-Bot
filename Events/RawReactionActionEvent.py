@@ -25,18 +25,22 @@ class RawReactionActionEvent(commands.Cog):
             if data is None:
                 data = database.execute("SELECT maxchoices FROM TimedPolls WHERE poll_id = ?", (message.embeds[0].footer.text[9:],)).fetchone()
                 if data is None:
-                    reaction
-
-                maxchoices = data[0]
-                reactions = message.reactions
-                user_reactions = []
-                for reaction in reactions:
-                    users = [user.id async for user in reaction.users()]
-                    if payload.user_id in users:
-                        user_reactions.append(reaction)
-
-                print(reactions)
-                print(len(user_reactions))
+                    maxchoices = data[0]
+                    reactions = message.reactions
+                    user_reactions = []
+                    for reaction in reactions:
+                        users = [user.id async for user in reaction.users()]
+                        if payload.user_id in users:
+                            user_reactions.append(reaction)
+                    
+                        if payload.emoji.name == reaction.emoji:
+                            user_reactions.remove(reaction)
+                    
+                    if (len(user_reactions)) == maxchoices:
+                        to_remove = user_reactions[len(user_reactions)-1:]
+                        
+                        for i in to_remove:
+                            await i.remove(user)
 
             if data is not None:
                 maxchoices = data[0]
