@@ -21,7 +21,7 @@ class ChannelSelectorView(View):
     
     @select(cls=ChannelSelect, channel_types=[discord.ChannelType.text], placeholder='Select a channel for warning logs', min_values=1, max_values=1, row=0)
     async def warn_logs_channel_select(self, interaction: discord.Interaction, select: ChannelSelect):
-        channel = interaction.guild.get_channel(select.values[0])
+        channel = interaction.guild.get_channel(select.values[0].id)
         database.execute("INSERT INTO LogChannels VALUES (?, ?, NULL, NULL, NULL) ON CONFLICT (guild_id) DO UPDATE SET warn_log_channel = ? WHERE guild_id = ?", (interaction.guild.id, channel.id, channel.id, interaction.guild.id,)).connection.commit()
         data = database.execute("SELECT warn_log_channel, ban_log_channel, kick_log_channel, timeout_log_channel FROM LogChannels WHERE guild_id = ?", (interaction.guild.id,)).fetchone()
         settings_embed = interaction.message.embeds[0]
@@ -39,7 +39,7 @@ class ChannelSelectorView(View):
     
     @select(cls=ChannelSelect, channel_types=[discord.ChannelType.text], placeholder='Select a channel for ban logs', min_values=1, max_values=1, row=1)
     async def ban_logs_channel_select(self, interaction: discord.Interaction, select: ChannelSelect):
-        channel = interaction.guild.get_channel(select.values[0])
+        channel = interaction.guild.get_channel(select.values[0].id)
         database.execute("INSERT INTO LogChannels VALUES (?, NULL, ?, NULL, NULL) ON CONFLICT (guild_id) DO UPDATE SET ban_log_channel = ? WHERE guild_id = ?", (interaction.guild.id, channel.id, channel.id, interaction.guild.id,)).connection.commit()
         data = database.execute("SELECT warn_log_channel, ban_log_channel, kick_log_channel, timeout_log_channel FROM LogChannels WHERE guild_id = ?", (interaction.guild.id,)).fetchone()
         settings_embed = interaction.message.embeds[0]
@@ -57,7 +57,7 @@ class ChannelSelectorView(View):
     
     @select(cls=ChannelSelect, channel_types=[discord.ChannelType.text], placeholder='Select a channel for kick logs', min_values=1, max_values=1, row=2)
     async def kick_logs_channel_select(self, interaction: discord.Interaction, select: ChannelSelect):
-        channel = interaction.guild.get_channel(select.values[0])
+        channel = interaction.guild.get_channel(select.values[0].id)
         database.execute("INSERT INTO LogChannels VALUES (?, NULL, NULL, ?, NULL) ON CONFLICT (guild_id) DO UPDATE SET kick_log_channel = ? WHERE guild_id = ?", (interaction.guild.id, channel.id, channel.id, interaction.guild.id,)).connection.commit()
         data = database.execute("SELECT warn_log_channel, ban_log_channel, kick_log_channel, timeout_log_channel FROM LogChannels WHERE guild_id = ?", (interaction.guild.id,)).fetchone()
         settings_embed = interaction.message.embeds[0]
@@ -75,7 +75,7 @@ class ChannelSelectorView(View):
     
     @select(cls=ChannelSelect, channel_types=[discord.ChannelType.text], placeholder='Select a channel for timeout logs', min_values=1, max_values=1, row=3)
     async def timeout_logs_channel_select(self, interaction: discord.Interaction, select: ChannelSelect):
-        channel = interaction.guild.get_channel(select.values[0])
+        channel = interaction.guild.get_channel(select.values[0].id)
         database.execute("INSERT INTO LogChannels VALUES (?, NULL, NULL, NULL, ?) ON CONFLICT (guild_id) DO UPDATE SET timeout_log_channel = ? WHERE guild_id = ?", (interaction.guild.id, channel.id, channel.id, interaction.guild.id,)).connection.commit()
         data = database.execute("SELECT warn_log_channel, ban_log_channel, kick_log_channel, timeout_log_channel FROM LogChannels WHERE guild_id = ?", (interaction.guild.id,)).fetchone()
         settings_embed = interaction.message.embeds[0]

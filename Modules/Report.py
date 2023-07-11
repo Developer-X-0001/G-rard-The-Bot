@@ -92,16 +92,16 @@ class ReportButtons(View):
     async def close(self, interaction: discord.Interaction, button: Button):
         await interaction.response.send_modal(ReportCloseModal(interaction.channel.id))
     
-    @button(label="Unreport", style=ButtonStyle.green, custom_id="unreport")
-    async def unreport(self, interaction: discord.Interaction, button: Button):
-        user_data = database.execute("SELECT reported_user FROM Reports WHERE thread_id = ?", (interaction.channel.id,)).fetchone()
-        data = database.execute("SELECT reports FROM UserData WHERE user_id = ?", (int(user_data[0])))
-        reports = int(data[0]) - 1
-        if reports < 0:
-            reports = 0
+    # @button(label="Unreport", style=ButtonStyle.green, custom_id="unreport")
+    # async def unreport(self, interaction: discord.Interaction, button: Button):
+    #     user_data = database.execute("SELECT reported_user FROM Reports WHERE thread_id = ?", (interaction.channel.id,)).fetchone()
+    #     data = database.execute("SELECT reports FROM UserData WHERE user_id = ?", (int(user_data[0])))
+    #     reports = int(data[0]) - 1
+    #     if reports < 0:
+    #         reports = 0
         
-        database.execute("UPDATE UserData SET reports = ? WHERE user_id = ?", (reports, int(user_data[0]),)).connection.commit()
-        await interaction.response.send_modal(UnReportModal(interaction.channel.id))
+    #     database.execute("UPDATE UserData SET reports = ? WHERE user_id = ?", (reports, int(user_data[0]),)).connection.commit()
+    #     await interaction.response.send_modal(UnReportModal(interaction.channel.id))
 
 class JoinReport(View):
     def __init__(self):
@@ -123,12 +123,6 @@ class ReportUser(commands.Cog):
     @app_commands.command(name="report", description="Report a certain user")
     @app_commands.describe(user="User whom you want to report", reason="Reason for report")
     async def report(self, interaction: discord.Interaction, user: discord.Member, reason: str):
-        data = database.execute("SELECT user_id FROM UserData WHERE user_id = ?", (user.id,)).fetchone()
-        if data is None:
-            database.execute("INSERT INTO UserData VALUES (?, 1, 0, 0, 0, 0)", (user.id,)).connection.commit()
-        else:
-            database.execute("UPDATE UserData SET reports = reports + 1 WHERE user_id = ?", (user.id,)).connection.commit()
-        
         reports_channel = interaction.guild.get_channel(config.REPORT_CHANNEL)
         report_queue_channel = interaction.guild.get_channel(config.REPORT_QUEUE_CHANNEL)
 

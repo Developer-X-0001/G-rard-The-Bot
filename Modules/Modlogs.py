@@ -21,7 +21,8 @@ class Modlogs(commands.Cog):
             for entry in data:
                 moderator = interaction.guild.get_member(entry[0])
                 new_entry = f"{counter}. {entry[1].capitalize()} | <t:{entry[2]}:d> | By: {moderator.mention}\n"
-                if (len(user_data) + len(new_entry)) > 4096:
+                
+                if counter > 30:
                     break
                 user_data += new_entry
                 counter += 1

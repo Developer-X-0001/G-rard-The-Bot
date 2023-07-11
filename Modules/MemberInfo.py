@@ -23,7 +23,7 @@ class MemberInfo(commands.Cog):
         elif hidden is None:
             ephemeral = True
 
-        warn_data = database.execute("SELECT user_id, mod_id, reason, time FROM Warns WHERE user_id = ? ORDER BY time DESC", (user.id,)).fetchall()
+        warn_data = database.execute("SELECT user_id, mod_id, reason, warned_at FROM Warns WHERE user_id = ? ORDER BY warned_at DESC", (user.id,)).fetchall()
         if warn_data == []:
             warns = 0
         else:

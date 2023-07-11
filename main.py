@@ -32,6 +32,16 @@ class Bot(commands.Bot):
                     PRIMARY KEY (guild_id)
                 )
             '''
+        ).execute(
+            '''
+                CREATE TABLE IF NOT EXISTS ReportsModuleSettings (
+                    guild_id INTEGER,
+                    reports_channel INTEGER,
+                    reports_queue_channel INTEGER,
+                    reports_log_channel INTEGER,
+                    PRIMARY KEY (guild_id)
+                )
+            '''
         )
 
         sqlite3.connect("./Databases/moderation.sqlite").execute(
