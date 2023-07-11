@@ -6,7 +6,7 @@ from discord.ext import commands
 from discord.ui import View, button, Button
 from discord import app_commands, ButtonStyle
 
-database = sqlite3.connect("./Databases/data.sqlite")
+database = sqlite3.connect("./Databases/moderation.sqlite")
 
 import discord
 from discord import TextStyle

@@ -1,3 +1,4 @@
+import re
 import config
 import sqlite3
 import discord
@@ -9,47 +10,102 @@ from discord import app_commands
 class Ban(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.database = sqlite3.connect("./Databases/data.sqlite")
+        self.database = sqlite3.connect("./Databases/moderation.sqlite")
 
     @app_commands.command(name="ban", description="Ban a member from the server for a specified duration.")
-    async def _ban(self, interaction: discord.Interaction, user: discord.Member, duration: app_commands.Choice[str], reason: str=None):
+    @app_commands.checks.has_permissions(ban_members=True)
+    @app_commands.choices(delete_messages=[
+        app_commands.Choice(name="Don't Delete Any", value=0),
+        app_commands.Choice(name="Previous Hour", value=3600),
+        app_commands.Choice(name="Previous 6 Hours", value=21600),
+        app_commands.Choice(name="Previous 12 Hours", value=43200),
+        app_commands.Choice(name="Previous 24 Hours", value=86400),
+        app_commands.Choice(name="Previous 3 Days", value=259200),
+        app_commands.Choice(name="Previous 7 Days", value=604800)
+    ])
+    async def _ban(self, interaction: discord.Interaction, user: discord.Member, delete_messages: app_commands.Choice[int], duration: str=None, reason: str=None):
         if user == interaction.user:
             await interaction.response.send_message(embed=discord.Embed(description="❌ **You can't ban yourself!**", color=discord.Color.red()), ephemeral=True)
             return
-
+        
         if reason is None:
             reason = "Not specified"
 
-        duration = 0
-        expiry = round(datetime.datetime.now().timestamp()) + duration
+        data = self.database.execute("SELECT user_id FROM Bans WHERE user_id = ?", (user.id,)).fetchone()
+        if data:
+            await interaction.response.send_message(embed=discord.Embed(description="❌ **{}** is already banned from the server!".format(user.name), color=discord.Color.red()), ephemeral=True)
+            return
 
-        self.database.execute(
-            '''
-                INSERT INTO Bans VALUES (
-                    ?,
-                    ?,
-                    ?,
-                    ?
-                ) ON CONFLICT (user_id)
-                DO UPDATE SET
-                    banned_at = ?,
-                    expires_in = ?,
-                    reason = ?
-                    WHERE user_id = ?
-            ''',
-            (
-                user.id,
-                round(datetime.datetime.now().timestamp()),
-                duration,
-                reason,
-                round(datetime.datetime.now().timestamp()),
-                duration,
-                reason,
-                user.id,
-            )
-        ).connection.commit()
+        if duration is None:
+            ban_type = 'permanent'
+            self.database.execute(
+                '''
+                    INSERT INTO Bans VALUES (
+                        ?,
+                        ?,
+                        ?,
+                        ?,
+                        ?,
+                        ?
+                    )
+                ''',
+                (
+                    user.id,
+                    round(datetime.datetime.now().timestamp()),
+                    None,
+                    interaction.user.id,
+                    ban_type,
+                    reason,
+                )
+            ).connection.commit()
+            await interaction.guild.ban(user=user, delete_message_seconds=delete_messages.value, reason=reason,)
+            await interaction.response.send_message(embed=discord.Embed(description="✅ **{}** has been banned from the server.\n**Ban Type:** {}\n**Ban Expiring in:** {}\n**Reason:** {}".format(user.name, ban_type.capitalize(), 'Never', reason), color=discord.Color.green()), ephemeral=True)
 
-        await interaction.response.send_message(embed=discord.Embed(description="✅ **{}** has been banned from the server.\n**Ban Expiring in:** <t:{}:f>\n**Reason:** {}".format(user.name, expiry, reason), color=discord.Color.green()), ephemeral=True)
+        if duration:
+            ban_type = 'temporary'
+            pattern = r'(\d+s)?(\d+m)?(\d+h)?(\d+d)?'
+            match = re.match(pattern, duration)
+
+            if match:
+                seconds = int(match.group(1)[:-1]) if match.group(1) else 0
+                minutes = int(match.group(2)[:-1]) if match.group(2) else 0
+                hours = int(match.group(3)[:-1]) if match.group(3) else 0
+                days = int(match.group(4)[:-1]) if match.group(4) else 0
+
+                total_seconds = seconds + (minutes * 60) + (hours * 60 * 60) + (days * 24 * 60 * 60)
+
+                expiry = round(datetime.datetime.now().timestamp()) + total_seconds
+
+                self.database.execute(
+                    '''
+                        INSERT INTO Bans VALUES (
+                            ?,
+                            ?,
+                            ?,
+                            ?,
+                            ?,
+                            ?
+                        )
+                    ''',
+                    (
+                        user.id,
+                        round(datetime.datetime.now().timestamp()),
+                        expiry,
+                        interaction.user.id,
+                        ban_type,
+                        reason,
+                    )
+                ).connection.commit()
+                await interaction.guild.ban(user=user, delete_message_seconds=delete_messages.value, reason=reason,)
+                await interaction.response.send_message(embed=discord.Embed(description="✅ **{}** has been banned from the server.\n**Ban Type:** {}\n**Ban Expiring in:** <t:{}:f>\n**Reason:** {}".format(user.name, ban_type.capitalize(), expiry, reason), color=discord.Color.green()), ephemeral=True)
+            
+            else:
+                error_embed = discord.Embed(
+                    title="Invalid time specification!",
+                    description="**You have entered an invalid time!**\nUse a valid time code. Time codes can consist of several times ending with s (second), m (minute), h (hour), d (day) or w (week).\nExamples: 15m for 15 minutes, 1h for 1 hour, 3d for 3 days, 3d5h2m for 3 days, 5 hours and 2 minutes\n\nPS: You can click on the blue `/ban` command above this message to receive a copy of the used command for your poll",
+                    color=discord.Color.orange()
+                )
+                await interaction.response.send_message(embed=error_embed, ephemeral=True)
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(Ban(bot))

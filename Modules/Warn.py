@@ -4,7 +4,7 @@ import datetime
 from discord.ext import commands
 from discord import app_commands
 
-database = sqlite3.connect("./Databases/data.sqlite")
+database = sqlite3.connect("./Databases/moderation.sqlite")
 
 class Warn(commands.Cog):
     def __init__(self, bot: commands.Bot):

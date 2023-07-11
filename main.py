@@ -21,7 +21,31 @@ class Bot(commands.Bot):
         )
 
     async def setup_hook(self):
-        sqlite3.connect('./Databases/data.sqlite').execute(
+        sqlite3.connect("./Databases/moderation.sqlite").execute(
+            '''
+                CREATE TABLE IF NOT EXISTS Bans (
+                    user_id INTEGER,
+                    banned_at INTEGER,
+                    expires_in INTEGER,
+                    mod_id INTEGER,
+                    type INTEGER,
+                    reason TEXT,
+                    PRIMARY KEY (user_id)
+                )
+            '''
+        ).execute(
+            '''
+                CREATE TABLE IF NOT EXISTS Warns (
+                    user_id INTEGER,
+                    warned_at INTEGER,
+                    expires_in INTEGER,
+                    mod_id INTEGER,
+                    type INTEGER,
+                    reason TEXT,
+                    PRIMARY KEY (user_id)
+                )
+            '''
+        ).execute(
             '''
                 CREATE TABLE IF NOT EXISTS Reports (
                     user_id INTEGER,
@@ -29,24 +53,6 @@ class Bot(commands.Bot):
                     thread_id INTEGER,
                     message_id INTEGER,
                     PRIMARY KEY (message_id)
-                )
-            '''
-        ).execute(
-            '''
-                CREATE TABLE IF NOT EXISTS Bans (
-                    user_id INTEGER,
-                    banned_at INTEGER,
-                    expires_in INTEGER,
-                    reason TEXT,
-                    PRIMARY KEY(user_id))
-            '''
-        ).execute(
-            '''
-                CREATE TABLE IF NOT EXISTS Warns (
-                    user_id INTEGER,
-                    mod_id INTEGER,
-                    reason TEXT,
-                    time INTEGER
                 )
             '''
         )

@@ -3,7 +3,7 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 
-database = sqlite3.connect("./Databases/data.sqlite")
+database = sqlite3.connect("./Databases/moderation.sqlite")
 
 class MemberInfo(commands.Cog):
     def __init__(self, bot: commands.Bot):
