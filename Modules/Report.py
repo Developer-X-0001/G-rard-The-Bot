@@ -1,7 +1,10 @@
+import string
+import random
 import config
 import sqlite3
 import discord
 import datetime
+
 from discord.ext import commands
 from discord.ui import View, button, Button
 from discord import app_commands, ButtonStyle
@@ -123,6 +126,7 @@ class ReportUser(commands.Cog):
     @app_commands.command(name="report", description="Report a certain user")
     @app_commands.describe(user="User whom you want to report", reason="Reason for report")
     async def report(self, interaction: discord.Interaction, user: discord.Member, reason: str):
+        id = ''.join([random.choice(string.ascii_letters + string.digits) for n in range(6)]).upper()
         reports_channel = interaction.guild.get_channel(config.REPORT_CHANNEL)
         report_queue_channel = interaction.guild.get_channel(config.REPORT_QUEUE_CHANNEL)
 
@@ -152,6 +156,7 @@ class ReportUser(commands.Cog):
         await thread.send(content=user.mention, embed=embed, view=ReportButtons())
         msg = await report_queue_channel.send(embed=report_embed, view=JoinReport())
         database.execute("INSERT INTO Reports VALUES (?, ?, ?, ?)", (interaction.user.id, user.id, thread.id, msg.id,)).connection.commit()
+        database.execute("INSERT INTO ModLogs VALUES (?, ?, ?, ?, ?, ?)", (id, user.id, interaction.user.id, 'report', round(datetime.datetime.now().timestamp()), reason,)).connection.commit()
         await interaction.response.send_message(embed=discord.Embed(description="✅ Report Submitted", color=discord.Color.green()), ephemeral=True)
     
     @app_commands.command(name="add-to-thread", description="Add a moderator to report thread")

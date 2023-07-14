@@ -3,6 +3,7 @@ import config
 import sqlite3
 import discord
 from discord.ext import commands
+from Interface.CaseView import CaseView
 from Interface.SelectMenus import RoleSelector
 from Modules.Report import JoinReport, ReportButtons
 from Interface.RedeemRequestView import RedeemRequestView
@@ -42,6 +43,16 @@ class Bot(commands.Bot):
                     PRIMARY KEY (guild_id)
                 )
             '''
+        ).execute(
+            '''
+                CREATE TABLE IF NOT EXISTS CasesModuleSettings (
+                    guild_id INTEGER,
+                    cases_channel INTEGER,
+                    cases_log_channel INTEGER,
+                    cases_role INTEGER,
+                    PRIMARY KEY (guild_id)
+                )
+            '''
         )
 
         sqlite3.connect("./Databases/moderation.sqlite").execute(
@@ -64,8 +75,7 @@ class Bot(commands.Bot):
                     expires_in INTEGER,
                     mod_id INTEGER,
                     type INTEGER,
-                    reason TEXT,
-                    PRIMARY KEY (user_id)
+                    reason TEXT
                 )
             '''
         ).execute(
@@ -88,6 +98,21 @@ class Bot(commands.Bot):
                     action_at INTEGER,
                     reason TEXT,
                     PRIMARY KEY (action_id)
+                )
+            '''
+        ).execute(
+            '''
+                CREATE TABLE IF NOT EXISTS Cases (
+                    case_id TEXT,
+                    user INTEGER,
+                    mod INTEGER,
+                    reason TEXT,
+                    thread_id INTEGER,
+                    message_id INTEGER,
+                    status TEXT,
+                    opened_at INTEGER,
+                    closed_at INTGER,
+                    PRIMARY KEY (case_id)
                 )
             '''
         )
@@ -286,6 +311,7 @@ class Bot(commands.Bot):
         )
 
         data = database.execute("SELECT panel_id FROM ReactionRoles").fetchall()
+        self.add_view(CaseView())
         self.add_view(JoinReport())
         self.add_view(ReportButtons())
         self.add_view(RedeemRequestView())

@@ -12,6 +12,9 @@ class Modlogs(commands.Cog):
 
     @app_commands.command(name="modlogs", description="Check moderation history of a user")
     @app_commands.checks.has_permissions(administrator=True)
+    @app_commands.describe(
+        user="User whos moderation log you want to see"
+    )
     async def modlogs(self, interaction: discord.Interaction, user: discord.Member):
         data = self.database.execute("SELECT mod_id, action, action_at FROM Modlogs WHERE user_id = ? ORDER BY action_at DESC", (user.id,)).fetchall()
         if data:

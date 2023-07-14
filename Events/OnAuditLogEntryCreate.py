@@ -20,14 +20,34 @@ class OnAuditLogEntryCreate(commands.Cog):
             moderator = entry.user
             reason = entry.reason
             self.database.execute("INSERT INTO ModLogs VALUES (?, ?, ?, ?, ?, ?)", (id, target.id, moderator.id, 'ban', round(datetime.datetime.now().timestamp()), reason,)).connection.commit()
-            return
         
         if entry.action.name == 'unban':
             target = entry.target
             moderator = entry.user
             reason = entry.reason
             self.database.execute("INSERT INTO ModLogs VALUES (?, ?, ?, ?, ?, ?)", (id, target.id, moderator.id, 'unban', round(datetime.datetime.now().timestamp()), reason,)).connection.commit()
-            return
+            
+            data = sqlite3.connect("./Databases/settings.sqlite").execute("SELECT ban_log_channel FROM LogChannels WHERE guild_id = ?", (entry.guild.id,)).fetchone()
+            if data is None:
+                return
+            else:
+                channel = entry.guild.get_channel(data[0])
+                await channel.send(embed=discord.Embed(title="Unban Log", description=f"**Target:** {target.mention}\n**Moderator: {moderator.mention}**\n**Reason:** {reason}", color=discord.Color.blue()))
+                return
+
+        if entry.action.name == 'kick':
+            target = entry.target
+            moderator = entry.user
+            reason = entry.reason
+            self.database.execute("INSERT INTO ModLogs VALUES (?, ?, ?, ?, ?, ?)", (id, target.id, moderator.id, 'kick', round(datetime.datetime.now().timestamp()), reason,)).connection.commit()
+            
+            data = sqlite3.connect("./Databases/settings.sqlite").execute("SELECT kick_log_channel FROM LogChannels WHERE guild_id = ?", (entry.guild.id,)).fetchone()
+            if data is None:
+                return
+            else:
+                channel = entry.guild.get_channel(data[0])
+                await channel.send(embed=discord.Embed(title="Kick Log", description=f"**Target:** {target.mention}\n**Moderator: {moderator.mention}**\n**Reason:** {reason}", color=discord.Color.blue()))
+                return
     
 async def setup(bot: commands.Bot):
     await bot.add_cog(OnAuditLogEntryCreate(bot))

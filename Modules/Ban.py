@@ -22,6 +22,12 @@ class Ban(commands.Cog):
         app_commands.Choice(name="Previous 3 Days", value=259200),
         app_commands.Choice(name="Previous 7 Days", value=604800)
     ])
+    @app_commands.describe(
+        user="User whom you are banning.",
+        delete_messages="How much of their recent message history to delete?",
+        duration="How long the ban should last? Leave none for permanent ban.",
+        reason="Reason for ban"
+    )
     async def _ban(self, interaction: discord.Interaction, user: discord.Member, delete_messages: app_commands.Choice[int], duration: str=None, reason: str=None):
         if user == interaction.user:
             await interaction.response.send_message(embed=discord.Embed(description="❌ **You can't ban yourself!**", color=discord.Color.red()), ephemeral=True)
@@ -60,6 +66,15 @@ class Ban(commands.Cog):
             ).connection.commit()
             await interaction.guild.ban(user=user, delete_message_seconds=delete_messages.value, reason=reason,)
             await interaction.response.send_message(embed=discord.Embed(description="✅ **{}** has been banned from the server.\n**Ban Type:** {}\n**Ban Expiring in:** {}\n**Reason:** {}".format(user.name, ban_type.capitalize(), 'Never', reason), color=discord.Color.green()), ephemeral=True)
+        
+            data = sqlite3.connect("./Databases/settings.sqlite").execute("SELECT ban_log_channel FROM LogChannels WHERE guild_id = ?", (interaction.guild.id,)).fetchone()
+            if data is None:
+                return
+            
+            else:
+                channel = interaction.guild.get_channel(data[0])
+                await channel.send(embed=discord.Embed(title="Ban Log", description=f"**Target:** {user.mention}\n**Moderator: {interaction.user.mention}**\n**Reason:** {reason}\n**Duration:** Permanent", color=discord.Color.blue()))
+                return
 
         if duration:
             ban_type = 'temporary'
@@ -98,11 +113,20 @@ class Ban(commands.Cog):
                 ).connection.commit()
                 await interaction.guild.ban(user=user, delete_message_seconds=delete_messages.value, reason=reason,)
                 await interaction.response.send_message(embed=discord.Embed(description="✅ **{}** has been banned from the server.\n**Ban Type:** {}\n**Ban Expiring in:** <t:{}:f>\n**Reason:** {}".format(user.name, ban_type.capitalize(), expiry, reason), color=discord.Color.green()), ephemeral=True)
+
+                data = sqlite3.connect("./Databases/settings.sqlite").execute("SELECT ban_log_channel FROM LogChannels WHERE guild_id = ?", (interaction.guild.id,)).fetchone()
+                if data is None:
+                    return
+                
+                else:
+                    channel = interaction.guild.get_channel(data[0])
+                    await channel.send(embed=discord.Embed(title="Ban Log", description=f"**Target:** {user.mention}\n**Moderator: {interaction.user.mention}**\n**Reason:** {reason}\n**Duration:** {duration}", color=discord.Color.blue()))
+                    return
             
             else:
                 error_embed = discord.Embed(
                     title="Invalid time specification!",
-                    description="**You have entered an invalid time!**\nUse a valid time code. Time codes can consist of several times ending with s (second), m (minute), h (hour), d (day) or w (week).\nExamples: 15m for 15 minutes, 1h for 1 hour, 3d for 3 days, 3d5h2m for 3 days, 5 hours and 2 minutes\n\nPS: You can click on the blue `/ban` command above this message to receive a copy of the used command for your poll",
+                    description="**You have entered an invalid time!**\nUse a valid time code. Time codes can consist of several times ending with s (second), m (minute), h (hour), d (day) or w (week).\nExamples: 15m for 15 minutes, 1h for 1 hour, 3d for 3 days, 3d5h2m for 3 days, 5 hours and 2 minutes\n\nPS: You can click on the blue `/ban` command above this message to receive a copy of the used command for your ban",
                     color=discord.Color.orange()
                 )
                 await interaction.response.send_message(embed=error_embed, ephemeral=True)

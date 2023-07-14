@@ -15,6 +15,10 @@ class MemberInfo(commands.Cog):
         app_commands.Choice(name="True", value=1),
         app_commands.Choice(name="False", value=0)
     ])
+    @app_commands.describe(
+        user="User whos information you want to see",
+        hidden="Either the information comes hidden or visible to all"
+    )
     async def userinfo(self, interaction: discord.Interaction, user: discord.Member, hidden: app_commands.Choice[int]=None):
         if hidden is not None and hidden.value == 1:
             ephemeral = True
@@ -23,11 +27,36 @@ class MemberInfo(commands.Cog):
         elif hidden is None:
             ephemeral = True
 
-        warn_data = database.execute("SELECT user_id, mod_id, reason, warned_at FROM Warns WHERE user_id = ? ORDER BY warned_at DESC", (user.id,)).fetchall()
+        report_data = database.execute("SELECT * FROM Modlogs WHERE user_id = ? AND action = ?", (user.id, 'report')).fetchall()
+        if report_data == []:
+            reports = 0
+        else:
+            reports = len(report_data)
+
+        warn_data = database.execute("SELECT * FROM Modlogs WHERE user_id = ? AND action = ?", (user.id, 'warn')).fetchall()
         if warn_data == []:
             warns = 0
         else:
             warns = len(warn_data)
+        
+        timeout_data = database.execute("SELECT * FROM Modlogs WHERE user_id = ? AND action = ?", (user.id, 'timeout')).fetchall()
+        if timeout_data == []:
+            timeouts = 0
+        else:
+            timeouts = len(timeout_data)
+        
+        ban_data = database.execute("SELECT * FROM Modlogs WHERE user_id = ? AND action = ?", (user.id, 'ban')).fetchall()
+        if ban_data == []:
+            bans = 0
+        else:
+            bans = len(ban_data)
+        
+        case_data = database.execute("SELECT * FROM Modlogs WHERE user_id = ? AND action = ?", (user.id, 'case')).fetchall()
+        if case_data == []:
+            cases = 0
+        else:
+            cases = len(case_data)
+
         roles = user.roles
         roles.pop(0)
         
@@ -47,24 +76,14 @@ class MemberInfo(commands.Cog):
                         f"**Account Created On:** <t:{round(user.created_at.timestamp())}:D>\n"
                         f"**Date Joined Server:** <t:{round(user.joined_at.timestamp())}:d>\n"
                         f"**Roles:** {roles[:-2]}\n\n"
-                        f"**Reports:** {0}\n"
+                        f"**Reports:** {reports}\n"
                         f"**Warns:** {warns}\n"
-                        f"**Timeouts:** {0}\n"
-                        f"**Bans:** {0}\n"
-                        f"**Cases:** {0}",
-            color=user.accent_color
+                        f"**Timeouts:** {timeouts}\n"
+                        f"**Bans:** {bans}\n"
+                        f"**Cases:** {cases}",
+            color=user.color
         )
         embed.set_thumbnail(url=user.display_avatar.url)
-        if warn_data != []:
-            mod_user = interaction.guild.get_member(warn_data[0][1])
-            embed.add_field(
-                name="**Most Recent Warning:**",
-                value=f"**Moderator:** {mod_user.mention}\n"
-                    f"**Time:** <t:{warn_data[0][3]}:f>\n"
-                    f"**Reason:** {warn_data[0][2]}",
-                inline=False
-            )
-
         await interaction.response.send_message(embed=embed, ephemeral=ephemeral)
 
 async def setup(bot: commands.Bot):

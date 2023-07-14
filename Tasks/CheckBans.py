@@ -25,7 +25,7 @@ class CheckBans(commands.Cog):
                         user = self.bot.get_user(entry[0])
                         await guild.unban(user=user, reason="Ban expired.")
                         id = ''.join([random.choice(string.ascii_letters + string.digits) for n in range(6)]).upper()
-                        database.execute("DELETE FROM Bans WHERE user_id = ?", (user.id,)).connection.commit()
+                        database.execute("DELETE FROM Bans WHERE user_id = ? AND expires_in = ?", (user.id, entry[1])).connection.commit()
                         database.execute("INSERT INTO ModLogs VALUES (?, ?, ?, ?, ?, ?)", (id, user.id, self.bot.user.id, 'unban', round(datetime.datetime.now().timestamp()), 'Ban expired',)).connection.commit()
                     except:
                         raise Exception

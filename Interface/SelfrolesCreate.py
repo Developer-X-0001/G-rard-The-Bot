@@ -85,6 +85,7 @@ class GetChoices(Select):
 
 class EditAllowedSelection(View):
     def __init__(self, panel_id: str, selection_amount: int):
+        self.panel_id = panel_id
         super().__init__(timeout=None)
         self.add_item(SetAmountSelection(panel_id, selection_amount))
 

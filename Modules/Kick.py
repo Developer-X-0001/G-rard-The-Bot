@@ -12,6 +12,10 @@ class Kick(commands.Cog):
     @app_commands.command(name="kick", description="Kick a user from the server")
     @app_commands.checks.has_permissions(kick_members=True)
     @app_commands.checks.bot_has_permissions(kick_members=True)
+    @app_commands.describe(
+        user="User whom you are going to kick",
+        reason="Reason for kick"   
+    )
     async def kick(self, interaction: discord.Interaction, user: discord.Member, reason: str=None):
         if reason is None:
             reason = "No reason specified"
