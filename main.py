@@ -30,6 +30,7 @@ class Bot(commands.Bot):
                     ban_log_channel INTEGER,
                     kick_log_channel INTEGER,
                     timeout_log_channel INTEGER,
+                    role_log_channel INTEGER,
                     PRIMARY KEY (guild_id)
                 )
             '''

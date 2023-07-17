@@ -22,7 +22,7 @@ class Settings(commands.Cog):
         if interaction.guild.icon:
             settings_embed.set_thumbnail(url=interaction.guild.icon.url)
         
-        data = database.execute("SELECT warn_log_channel, ban_log_channel, kick_log_channel, timeout_log_channel FROM LogChannels WHERE guild_id = ?", (interaction.guild.id,)).fetchone()
+        data = database.execute("SELECT warn_log_channel, ban_log_channel, kick_log_channel, timeout_log_channel, role_log_channel FROM LogChannels WHERE guild_id = ?", (interaction.guild.id,)).fetchone()
         if data:
             settings_embed.add_field(
                 name="Logging Channels:",
@@ -30,6 +30,7 @@ class Settings(commands.Cog):
                         Kick Logs - {'Not set' if data[2] is None else interaction.guild.get_channel(data[2]).mention}
                         Timeout Logs - {'Not set' if data[3] is None else interaction.guild.get_channel(data[3]).mention}
                         Warning Logs - {'Not set' if data[0] is None else interaction.guild.get_channel(data[0]).mention}
+                        Role Update Logs - {'Not set' if data[4] is None else interaction.guild.get_channel(data[4]).mention}
                     ''',
                 inline=False
             )
@@ -41,6 +42,7 @@ class Settings(commands.Cog):
                         Kick Logs - Not set
                         Timeout Logs - Not set
                         Warning Logs - Not set
+                        Role Update Logs - Not set
                     ''',
                 inline=False
             )
