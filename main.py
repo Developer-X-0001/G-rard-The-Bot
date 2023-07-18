@@ -252,6 +252,17 @@ class Bot(commands.Bot):
                     timestamp INTEGER
                 )
             '''
+        ).execute(
+            '''
+                CREATE TABLE IF NOT EXISTS TicketsConfig (
+                    guild_id INTEGER,
+                    ticket_method TEXT,
+                    manager_role INTEGER,
+                    dm_responses TEXT,
+                    log_channel INTEGER,
+                    PRIMARY KEY (guild_id)
+                )
+            '''
         )
 
         sqlite3.connect("./Databases/shop.sqlite").execute(

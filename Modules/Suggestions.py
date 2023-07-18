@@ -142,6 +142,12 @@ class Suggestions(commands.Cog):
             approved_embed.set_footer(text=f"sID: {suggestion_id}")
 
             await suggestion_message.edit(embed=approved_embed, view=None)
+
+            log_channel_data = database.execute("SELECT approved_channel_id FROM Config WHERE guild_id = ?", (interaction.guild.id,)).fetchone()
+            if log_channel_data:
+                log_channel = interaction.guild.get_channel(log_channel_data[0])
+                await log_channel.send(embed=approved_embed)
+
             if dm_data is not None and dm_data[0] == 'Enabled':
                 resp_embed = discord.Embed(
                     title=interaction.guild.name,
@@ -231,11 +237,17 @@ class Suggestions(commands.Cog):
             rejected_embed.set_footer(text=f"sID: {suggestion_id}")
 
             await suggestion_message.edit(embed=rejected_embed, view=None)
+
+            log_channel_data = database.execute("SELECT declined_channel_id FROM Config WHERE guild_id = ?", (interaction.guild.id,)).fetchone()
+            if log_channel_data:
+                log_channel = interaction.guild.get_channel(log_channel_data[0])
+                await log_channel.send(embed=rejected_embed)
+
             if dm_data is not None and dm_data[0] == 'Enabled':
                 resp_embed = discord.Embed(
                     title=interaction.guild.name,
                     description=f'''
-                        Hey, {user.mention}. Your suggestion has been approved by {interaction.user.mention}!
+                        Hey, {user.mention}. Your suggestion has been rejected by {interaction.user.mention}!
 
                         Your suggestion ID (sID) for referance was **{suggestion_id}**.
                     ''',

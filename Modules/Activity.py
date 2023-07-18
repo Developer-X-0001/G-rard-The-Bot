@@ -252,5 +252,87 @@ class Activity(commands.Cog):
 
         await interaction.response.send_message(embed=discord.Embed(description="✅ Points given per invite has been set to `{}`!".format(amount), color=discord.Color.green()), ephemeral=True)
 
+    @activity_group.command(name="add-points", description="Give points to a user")
+    @app_commands.describe(
+        user="The user whom you are giving the points.",
+        amount="Amount of points."
+    )
+    async def add_points(self, interaction: discord.Interaction, user: discord.Member, amount: int):
+        if amount <= 0:
+            await interaction.response.send_message(embed=discord.Embed(description="❌ **Amount must be greater than zero!**", color=discord.Color.red()), ephemeral=True)
+            return
+        
+        self.database.execute(
+            '''
+                INSERT INTO UserProfiles VALUES (
+                    ?,
+                    ?,
+                    ?,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                ) ON CONFLICT (user_id)
+                DO UPDATE SET 
+                    current_points = current_points + ?,
+                    total_points = total_points + ?
+                    WHERE user_id = ?
+            ''',
+            (
+                user.id,
+                amount,
+                amount,
+                amount,
+                amount,
+                user.id,
+            )
+        ).connection.commit()
+
+        await interaction.response.send_message(embed=discord.Embed(description="✅ Successfully added `{}` points to {}'s activity points.".format(amount, user.mention), color=discord.Color.green()), ephemeral=True)
+    
+    @activity_group.command(name="remove-points", description="Remove points from a user")
+    @app_commands.describe(
+        user="The user whose points you are removing.",
+        amount="Amount of points."
+    )
+    async def add_points(self, interaction: discord.Interaction, user: discord.Member, amount: int):
+        if amount <= 0:
+            await interaction.response.send_message(embed=discord.Embed(description="❌ **Amount must be greater than zero!**", color=discord.Color.red()), ephemeral=True)
+            return
+        
+        data = self.database.execute("SELECT current_points FROM UserProfiles WHERE user_id = ?", (user.id,)).fetchone()
+        
+        current_points = 0 if data is None else data[0]
+
+        if amount > current_points:
+            await interaction.response.send_message(embed=discord.Embed(description="❌ **Amount can't be greater than user's current points!**", color=discord.Color.red()), ephemeral=True)
+            return
+
+        self.database.execute(
+            '''
+                INSERT INTO UserProfiles VALUES (
+                    ?,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                ) ON CONFLICT (user_id)
+                DO UPDATE SET 
+                    current_points = current_points - ? 
+                    WHERE user_id = ?
+            ''',
+            (
+                user.id,
+                amount,
+                user.id,
+            )
+        ).connection.commit()
+
+        await interaction.response.send_message(embed=discord.Embed(description="✅ Successfully removed `{}` points from {}'s activity points.".format(amount, user.mention), color=discord.Color.green()), ephemeral=True)
+
 async def setup(bot: commands.Bot):
     await bot.add_cog(Activity(bot))

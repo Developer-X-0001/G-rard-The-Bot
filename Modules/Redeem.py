@@ -18,7 +18,7 @@ class Redeem(commands.Cog):
         role = interaction.guild.get_role(data[4])
 
         item_embed = discord.Embed(
-            title="Editing Item",
+            title="Item Information",
             color=discord.Color.blue()
         )
         item_embed.add_field(name="Name:", value=data[0], inline=False)

@@ -384,11 +384,7 @@ class Polls(commands.Cog):
             normal_poll_data = self.database.execute("SELECT channel_id, message_id, user_id, maxchoices, allowedrole, anonymous FROM NormalPolls WHERE poll_id = ?", (poll_id,)).fetchone()
             channel = interaction.guild.get_channel(normal_poll_data[0])
             message = await channel.fetch_message(normal_poll_data[1])
-            user = interaction.guild.get_member(normal_poll_data[2])
             reactions = message.reactions
-            allowedrole = interaction.guild.get_role(normal_poll_data[4])
-            anonymous = True if normal_poll_data[5] and normal_poll_data[5] == 'true' else False
-            maxchoices = '1 Allowed Choice' if normal_poll_data[3] is None or normal_poll_data[3] == 1 else '{} Allowed Choices'.format(normal_poll_data[3])
             poll_embed = message.embeds[0]
             poll_embed.color = discord.Color.red()
 
@@ -418,8 +414,42 @@ class Polls(commands.Cog):
 
             await interaction.response.send_message(embed=discord.Embed(title="Poll Closed", description="The poll with ID **{}** was closed!\nNo more votes are allowed and the result is now displayed in the poll.".format(poll_id), color=discord.Color.purple()), ephemeral=True)
             self.database.execute("UPDATE NormalPolls SET status = ?, closed_at = ?, result = ? WHERE poll_id = ?", ('closed', round(datetime.datetime.now().timestamp()), create_percentage_bar(choices=choices), poll_id,)).connection.commit()
+        
         else:
-            print()
+            channel = interaction.guild.get_channel(timed_poll_data[0])
+            message = await channel.fetch_message(timed_poll_data[1])
+            reactions = message.reactions
+            poll_embed = message.embeds[0]
+            poll_embed.color = discord.Color.red()
+            current_time = round(datetime.datetime.now().timestamp())
+            maxchoices = '1 Allowed Choice' if timed_poll_data[4] is None or timed_poll_data[4] == 1 else '{} Allowed Choices'.format(timed_poll_data[4])
+
+            choices = {}
+            users = []
+            for reaction in reactions:
+                choices.update({f'{reaction.emoji}': reaction.count - 1})
+                reaction_users = [user.id async for user in reaction.users()]
+                users = list(set(users) | set(reaction_users))
+
+            users.remove(self.bot.user.id) if self.bot.user.id in users else None
+            poll_embed.insert_field_at(
+                index=2,
+                name="Final Result:",
+                value=f"{create_percentage_bar(choices=choices)}{len(users)} user{'s' if len(users) > 1 else ''} voted",
+                inline=False
+            )
+            poll_embed.set_field_at(
+                index=3,
+                name="Settings:",
+                value=f"⏰ Poll already ended (<t:{current_time}:R>)\n{maxchoices}\n\n🔒 No other votes allowed",
+                inline=False
+            )
+
+            await message.edit(embed=poll_embed)
+            await message.clear_reactions()
+
+            await interaction.response.send_message(embed=discord.Embed(title="Poll Closed", description="The poll with ID **{}** was closed!\nNo more votes are allowed and the result is now displayed in the poll.".format(poll_id), color=discord.Color.purple()), ephemeral=True)
+            self.database.execute("UPDATE TimedPolls SET status = ?, closed_at = ?, result = ? WHERE poll_id = ?", ('closed', round(datetime.datetime.now().timestamp()), create_percentage_bar(choices=choices), poll_id,)).connection.commit()
     
     @close_poll.autocomplete('poll_id')
     async def close_poll_autocomplete(self, interaction: discord.Interaction, current: str):

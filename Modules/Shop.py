@@ -26,7 +26,7 @@ class Shop(commands.Cog):
             data = self.database.execute("SELECT name FROM Items WHERE name = ?", (name,)).fetchone()
             if data is None:
                 id = ''.join([random.choice(string.ascii_letters + string.digits) for n in range(6)]).upper()
-                self.database.execute("INSERT INTO Items VALUES (?, ?, ?, ?, NULL, ?)", (id, name, price, available.value, image_link, role.id,)).connection.commit()
+                self.database.execute("INSERT INTO Items VALUES (?, ?, ?, ?, ?, ?)", (id, name, price, available.value, image_link, role.id,)).connection.commit()
                 await interaction.response.send_message(embed=discord.Embed(description="✅ Successfully created a new item: **`{}`**".format(name), color=discord.Color.green()), ephemeral=True)
             else:
                 await interaction.response.send_message(embed=discord.Embed(description="❌ Item with name **`{}`** already exists!".format(name), color=discord.Color.red()), ephemeral=True)
@@ -96,6 +96,39 @@ class Shop(commands.Cog):
         )
         
         await interaction.response.send_message(embed=items_embed, ephemeral=True)
+
+    @shop_group.command(name="send-list", description="Send all items in a channel. (Defaults to current channel)")
+    async def send_list(self, interaction: discord.Interaction, channel: discord.TextChannel=None):
+        if channel is None:
+            channel = interaction.channel
+        
+        data = self.database.execute("SELECT name, price, available, image_link, role FROM Items").fetchall()
+        
+        embed_list = []
+
+        for entry in data:
+            role = interaction.guild.get_role(entry[4])
+
+            item_embed = discord.Embed(
+                color=discord.Color.blue()
+            )
+            item_embed.add_field(name="Name:", value=entry[0], inline=False)
+            item_embed.add_field(name="Price:", value=entry[1], inline=False)
+            item_embed.add_field(name="Availability:", value="Available" if entry[2] == 'yes' else 'Not Available', inline=False)
+            item_embed.add_field(name="Role:", value=role.mention, inline=False)
+            item_embed.set_footer(text="You must have the required role to redeem this item!")
+            item_embed.set_thumbnail(url=entry[3])
+
+            embed_list.append(item_embed)
+
+            if len(embed_list) == 10:
+                await channel.send(embeds=embed_list)
+                embed_list.clear()
+        
+        if len(embed_list) > 0:
+            await channel.send(embeds=embed_list)
+        
+        await interaction.response.send_message(embed=discord.Embed(description="✅ All listed items have been sent to {}.".format(channel.mention), color=discord.Color.green()), ephemeral=True)
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(Shop(bot))

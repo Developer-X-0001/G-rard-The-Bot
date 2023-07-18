@@ -75,7 +75,7 @@ class Warn(commands.Cog):
                     description=f"**{user.name}** has been warned.\n\n**Moderator:** {interaction.user.mention}\n**Reason:** {reason}\n**Warn Duration:** {duration}",
                     color=discord.Color.orange()
                 )
-                await interaction.response.send_message(embed=warn_embed)
+                await interaction.response.send_message(embed=warn_embed, ephemeral=True)
 
                 warned_at = round(datetime.datetime.now().timestamp())
                 id = ''.join([random.choice(string.ascii_letters + string.digits) for n in range(6)]).upper()
