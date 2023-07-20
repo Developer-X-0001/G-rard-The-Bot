@@ -5,6 +5,7 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 from Interface.TicketsConfig import TicketsConfigView
+from Interface.TicketInformationView import TicketSelectorView
 
 class Tickets(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -80,6 +81,46 @@ class Tickets(commands.Cog):
                 inline=False
             )
             await interaction.response.send_message(embed=config_embed, view=TicketsConfigView(), ephemeral=True)
+    
+    @app_commands.command(name="my-tickets", description="Shows your ticket history")
+    async def my_tickets(self, interaction: discord.Interaction):
+        tickets_data = self.database.execute("SELECT panel_id, channel_id, status, timestamp FROM UserTickets WHERE user_id = ? ORDER BY timestamp DESC", (interaction.user.id,)).fetchall()
+
+        open_tickets = ""
+        closed_tickets = ""
+        counter = 1
+
+        for ticket in tickets_data:
+            if ticket[2] == 'open':
+                channel = interaction.guild.get_channel(ticket[1])
+                if channel is None:
+                    channel = interaction.guild.get_thread(ticket[1])
+                open_tickets += f"{counter}. [{ticket[1]}]({channel.jump_url}) | <t:{ticket[3]}:R>\n"
+                counter += 1
+            else:
+                closed_tickets += f"{counter}. {ticket[1]} | <t:{ticket[3]}:R>\n"
+                counter += 1
+
+        embed = discord.Embed(
+            title="Your Ticket History",
+            color=discord.Color.blue()
+        )
+        embed.add_field(
+            name="Open Tickets:",
+            value="No open tickets." if open_tickets == "" else open_tickets,
+            inline=False
+        )
+        embed.add_field(
+            name="Closed Tickets:",
+            value="No closed tickets." if closed_tickets == "" else closed_tickets,
+            inline=False
+        )
+        
+        if open_tickets != "" or closed_tickets != "":
+            await interaction.response.send_message(embed=embed, view=TicketSelectorView(user_id=interaction.user.id), ephemeral=True)
+            return
+        
+        await interaction.response.send_message(embed=embed, ephemeral=True)
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(Tickets(bot))

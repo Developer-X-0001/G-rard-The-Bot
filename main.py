@@ -9,7 +9,7 @@ from Modules.Report import JoinReport, ReportButtons
 from Interface.TicketsConfig import GeneratePanelView
 from Interface.RedeemRequestView import RedeemRequestView
 from Interface.SuggestionButtons import SuggestionButtonsView
-from Interface.TicketButtons import TicketChannelButtons, TicketLogButtons
+from Interface.TicketButtons import TicketChannelButtons, TicketLogButtons, TicketCloseButtons
 
 intents = discord.Intents.all()
 
@@ -18,8 +18,8 @@ class Bot(commands.Bot):
         super().__init__(
             command_prefix="!",
             intents=intents,
-            activity=discord.Game(name='under development'),
-            status=discord.Status.idle,
+            activity=discord.Game(name='Medieval Storms'),
+            status=discord.Status.online,
             application_id=config.APPLICATION_ID
         )
 
@@ -333,6 +333,7 @@ class Bot(commands.Bot):
         self.add_view(TicketLogButtons())
         self.add_view(GeneratePanelView())
         self.add_view(RedeemRequestView())
+        self.add_view(TicketCloseButtons())
         self.add_view(TicketChannelButtons())
         self.add_view(SuggestionButtonsView())
         if data is not None:
