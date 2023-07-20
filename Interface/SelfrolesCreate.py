@@ -5,7 +5,7 @@ import random
 import sqlite3
 import discord
 from discord.ext import commands
-from Functions.ColorConverter import int_to_hex
+from Functions.ColorChecks import int_to_hex
 from discord import app_commands, ButtonStyle, TextStyle
 from Interface.SelectMenus import RoleSelector, ChannelSelector
 from discord.ui import Button, button, View, Select, select, TextInput, Modal

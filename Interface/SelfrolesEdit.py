@@ -2,7 +2,7 @@ import json
 import sqlite3
 import discord
 from discord import ButtonStyle, TextStyle
-from Functions.ColorConverter import int_to_hex
+from Functions.ColorChecks import int_to_hex
 from Interface.SelectMenus import ChannelSelector, RoleSelector
 from discord.ui import View, button, Button, TextInput, Modal, Select
 from Interface.Modals import EditColorModal, EditDescModal, EditTitleModal, AddChoiceModal

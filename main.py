@@ -6,8 +6,10 @@ from discord.ext import commands
 from Interface.CaseView import CaseView
 from Interface.SelectMenus import RoleSelector
 from Modules.Report import JoinReport, ReportButtons
+from Interface.TicketsConfig import GeneratePanelView
 from Interface.RedeemRequestView import RedeemRequestView
 from Interface.SuggestionButtons import SuggestionButtonsView
+from Interface.TicketButtons import TicketChannelButtons, TicketLogButtons
 
 intents = discord.Intents.all()
 
@@ -233,23 +235,14 @@ class Bot(commands.Bot):
 
         sqlite3.connect("./Databases/tickets.sqlite").execute(
             '''
-                CREATE TABLE IF NOT EXISTS TicketPanels (
-                    panel_id TEXT,
-                    message_id INTEGER,
-                    role_id INTEGER,
-                    channel_id INTEGER,
-                    category_id INTEGER,
-                    Primary Key (panel_id)
-                )
-            '''
-        ).execute(
-            '''
                 CREATE TABLE IF NOT EXISTS UserTickets (
                     panel_id TEXT,
                     user_id INTEGER,
                     channel_id INTEGER,
                     status TEXT,
-                    timestamp INTEGER
+                    timestamp INTEGER,
+                    log_message INTEGER,
+                    PRIMARY KEY (log_message)
                 )
             '''
         ).execute(
@@ -257,10 +250,21 @@ class Bot(commands.Bot):
                 CREATE TABLE IF NOT EXISTS TicketsConfig (
                     guild_id INTEGER,
                     ticket_method TEXT,
-                    manager_role INTEGER,
                     dm_responses TEXT,
                     log_channel INTEGER,
                     PRIMARY KEY (guild_id)
+                )
+            '''
+        ).execute(
+            '''
+                CREATE TABLE IF NOT EXISTS TicketPanels (
+                    panel_id TEXT,
+                    panel_title TEXT,
+                    panel_description TEXT,
+                    panel_emoji TEXT,
+                    panel_role INTEGER,
+                    panel_category INTEGER,
+                    panel_limit INTEGER
                 )
             '''
         )
@@ -326,7 +330,10 @@ class Bot(commands.Bot):
         self.add_view(CaseView())
         self.add_view(JoinReport())
         self.add_view(ReportButtons())
+        self.add_view(TicketLogButtons())
+        self.add_view(GeneratePanelView())
         self.add_view(RedeemRequestView())
+        self.add_view(TicketChannelButtons())
         self.add_view(SuggestionButtonsView())
         if data is not None:
             for i in data:

@@ -2,7 +2,7 @@ import sqlite3
 import discord
 from discord import TextStyle
 from discord.ui import Modal, TextInput
-from Functions.ColorConverter import hex_to_int, int_to_hex
+from Functions.ColorChecks import hex_to_int, int_to_hex
 
 database = sqlite3.connect('./Databases/reactionroles.sqlite')
 
